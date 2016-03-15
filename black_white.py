@@ -38,6 +38,7 @@ no_white_sound = 'digital:PowerUp11'
 new_game_sound = 'digital:PowerUp5'
 flip_sound = 'digital:PowerUp4'
 reds_away = 'digital:ThreeTone1'
+star_sound = 'digital:Laser6'
 star_away_sound = 'digital:PhaserDown3'
 
 
@@ -418,7 +419,8 @@ class Game (Scene):
 		
 		if self.star_square:
 			if self.star_square.state >= 3:
-				self.sparkle(color1, self.star_square.position, image='shp:Star', spread = 40, z_position = 0.99)
+                                sound.play_effect(star_sound)
+                                self.sparkle(color1, self.star_square.position, image='shp:Star', spread = 40, z_position = 0.99)
 				p_list = []
 				for item in (self.p1_count, self.p2_count, self.p3_count):
 					if int(item.text) < 9:
@@ -621,7 +623,7 @@ class Game (Scene):
 		# Move black & white square counters
 		self.move_counters()
 		
-		self.score.color = color1
+		self.score.color = text_color
 		
 		# New game sound!
 		sound.play_effect(new_game_sound)
