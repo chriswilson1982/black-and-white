@@ -26,15 +26,11 @@ If successful, tapping the timer will proceed to the next level. Otherwise, tap 
 
 ##### Power-Ups
 
-There are three power-ups at the top of the screen. You can get more by collecting stars. The power-ups are as follows:
+There are three power-ups at the top of the screen. You can get more by collecting stars. They can be very helpful, but not using them may have other advantages! The power-ups are ae shown below:
 
 1) Toggle all squares
-
 2) Unlock a tapped square
-
 3) Toggle a single square (and not its neighbours)
-
-They can be very helpful, but not using them may have other advantages...
 
 ##### Scoring
 
