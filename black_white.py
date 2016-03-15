@@ -38,7 +38,7 @@ no_white_sound = 'digital:PowerUp11'
 new_game_sound = 'digital:PowerUp5'
 flip_sound = 'digital:PowerUp4'
 reds_away = 'digital:ThreeTone1'
-star_sound = 'digital:Laser6'
+star_sound = 'digital:HighDown’
 star_away_sound = 'digital:PhaserDown3'
 
 
