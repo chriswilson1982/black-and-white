@@ -11,17 +11,13 @@ from time import sleep, time
 import console, pickle, sound, ui
 
 #---Load Configuation
-file = open("bwconfig.dat", "rb")
-data = pickle.load(file)
-file.close()
+with open("bwconfig.dat", "rb") as in_file:
+    data = pickle.load(in_file)
 
 #---Colour Setup
 color1 = "#000000"
 color2 = "#ffffff"
-color3 = data[1]
-color4 = data[2]
-background_color = data[0]
-text_color = data[4]
+background_color, color3, color4, difficulty, text_color = data
 colors = (color1, color2)
 all_colors = (color1, color2, color3, color4)
 
@@ -89,7 +85,6 @@ punishment_text = [
 ]
 
 #---Difficulty & Power-Ups
-difficulty = data[3]
 starting_powerups = 9 - difficulty * 3
 
 #---How to Play
@@ -124,10 +119,7 @@ class Game (Scene):
 		self.add_child(self.title)
 		
 		# Settings Button
-		if text_color == 0:
-			tex_set = Texture('typb:Cog')
-		elif text_color == 1:
-			tex_set = Texture('typw:Cog')
+		tex_set = Texture('typ{}:Cog'.format('w' if text_color else 'b'))
 		self.settings = SpriteNode(tex_set, position =(20, screen_h - 20), scale = 0.6)
 		self.settings.z_position = 0.9
 		self.add_child(self.settings)
