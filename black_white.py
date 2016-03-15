@@ -739,6 +739,8 @@ class Game (Scene):
 		self.black_count.text = str(len(black_list))
 		self.white_count.text = str(len(white_list))
 		
+		wc = len(white_list)
+		
 		# Prevents the square counters appearing on top of the star, if it exists	
 		try:
 			if self.star_square:
@@ -760,7 +762,7 @@ class Game (Scene):
 		except:
 			self.white_count.position = (-100, -100)
 		
-		if not white_list:
+		if not wc:
 			self.no_whites = True
 		
 		
