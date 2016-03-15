@@ -24,25 +24,27 @@ When you are ready, press the central button at the bottom of the screen. This w
 
 If successful, tapping the timer will proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level! Tapping the exit icon at the top right will exit the game.
 
-##### POWER-UPS
+##### Power-Ups
 
 There are three power-ups at the top of the screen. You can get more by collecting stars. The power-ups are as follows:
 
 1) Toggle all squares
+
 2) Unlock a tapped square
+
 3) Toggle a single square (and not its neighbours)
 
 They can be very helpful, but not using them may have other advantages...
 
-##### SCORING
+##### Scoring
 
 Points are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). It's possible to lose points in a given round, but you might need to in order to progress!
 
-##### SETTINGS
+##### Settings
 
 The cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.
 
-##### HIGHSCORES
+##### Highscores
 
 The highscore table can be viewed by tapping the icon in the bottom right. There is a separate table for each difficulty setting.
 
