@@ -89,7 +89,7 @@ punishment_text = [
 starting_powerups = 9 - difficulty * 3
 
 #---How to Play
-how_to_play = "Instructions"
+instructions = "The goal is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the eight surrounding squares.\n\nWhen you are ready, press the central button at the bottom of the screen. This will happen automatically if the timer expires, as shown by the circle at the bottom.\n\nIf successful, tapping the timer will proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level! Tapping the exit icon at the top right will exit the game.\n\n--- POWER-UPS ---\n\nThere are three power-ups at the top of the screen. You can get more by collecting stars. The power-ups are as follows:\n\n1) Toggle all squares\n\n2) Unlock a tapped square\n\n3) Toggle a single square (and not its neighbours)\n\nThey can be very helpful, but not using them may have other advantages...\n\n--- SCORING ---\n\nPoints are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). It's possible to lose points in a given round, but you might need to in order to progress!\n\n--- SETTINGS ---\n\nThe cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.\n\n--- HIGHSCORES ---\n\nThe highscore table can be viewed by tapping the icon in the bottom right. There is a separate table for each difficulty setting.\n\n--- GENERAL INFO ---\n\nBlack & White was created by Chris Wilson using the iOS app Pythonista, by Ole Zorn. Thanks to GitHub contributors cclauss and omz."
 
 
 #---Class: Game
@@ -954,8 +954,13 @@ class Game (Scene):
 			self.new_game(self.win)
 		
 		# Shown instructions
+		@ui.in_background
 		def how_to_play(sender):
 			sound.play_effect(button_sound)
+			try:
+				console.alert("How to play Black & White", instructions)
+			except KeyboardInterrupt:
+				return
 		
 		# Set to default color scheme
 		def default(sender):
