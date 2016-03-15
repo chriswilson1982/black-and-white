@@ -412,14 +412,10 @@ class Game (Scene):
 
 	# Success
 	def winning(self):
-		black_list = []
-		white_list = []
+		black_list = [square for square in self.square if square.state == 1]
+		white_list = [square for square in self.square if square.state == 2]
 		add_score = 0
 		for square in self.squares:
-			if square.state == 1 and square != self.star_square:
-				black_list.append(square)
-			elif square.state == 2:
-				white_list.append(square)
 			if square.state >= 3:
 				add_score += 1
 				self.sparkle(color4, square.position, image='shp:RoundRect')
@@ -583,7 +579,6 @@ class Game (Scene):
 
 	# Start a new game
 	def new_game(self, win):
-		self.score.color = color1
 		for item in (self.timer_mark, self.timer_mark_2):
 			item.alpha = 1
 			item.run_action(A.sequence(A.scale_y_to(0.6, 0), A.scale_y_to(1, 0.3)))
@@ -633,6 +628,8 @@ class Game (Scene):
 		
 		# Move black & white square counters
 		self.move_counters()
+		
+		self.score.color = color1
 		
 		# New game sound!
 		sound.play_effect(new_game_sound)
@@ -739,11 +736,10 @@ class Game (Scene):
 	def move_counters(self):
 		black_list = [square for square in self.square if square.state == 1]
 		white_list = [square for square in self.square if square.state == 2]
-		if black_list:
-			self.black_count.text = str(len(black_list))
-		if white_list:
-			self.white_count.text = str(len(white_list))
-			
+		self.black_count.text = str(len(black_list))
+		self.white_count.text = str(len(white_list))
+		
+		# Prevents the square counters appearing on top of the star, if it exists	
 		try:
 			if self.star_square:
 				if self.star_square in black_list:
