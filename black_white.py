@@ -2,13 +2,13 @@
 
 #---Black & White: A Game by Chris Wilson
 
+#---Last updated: 15 March 2016
+
 from scene import *
 from math import pi
 from random import choice, randint, randrange, random, uniform
 from time import sleep, time
 import console, pickle, sound, ui
-
-#---Last updated: 14 March 2016
 
 #---Load Configuation
 file = open("bwconfig.dat", "rb")
