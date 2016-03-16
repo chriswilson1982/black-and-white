@@ -13,8 +13,9 @@ Last updated: 16 March 2016
 
 Black & White is a grid-based game created using [Pythonista](http://omz-software.com/pythonista/) on iOS.
 
-<img src="https://www.dropbox.com/s/z3tkj57kgdc8tbq/screenshot.png?raw=1" alt="Screenshot" width="300"/>
+<img src="https://www.dropbox.com/s/bibtorei9kxcscb/screenshot1.PNG?raw=1" alt="Screenshot" width="300"/> <img src="https://www.dropbox.com/s/g5sw78zhw54sais/screenshot2.PNG?raw=1" alt="Screenshot" width="300"/>
 
+<img src="https://www.dropbox.com/s/18114kawpuqlb7g/screenshot3.PNG?raw=1" alt="Screenshot" width="300"/> <img src="https://www.dropbox.com/s/svozbi8u06jznux/screenshot4.PNG?raw=1" alt="Screenshot" width="300"/>
 
 #### Instructions
 
