@@ -37,9 +37,9 @@ There are three power-ups at the top of the screen. You can get more by collecti
 
 Points are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). It's possible to lose points in a given round, but you might need to in order to progress!
 
-##### Settings
+##### ⚙ Settings
 
-The cog '⚙' icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.
+The cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.
 
 ##### Highscores
 
