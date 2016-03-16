@@ -1065,7 +1065,7 @@ class Game (Scene):
 			# Configuration data saved for next startup
 			data = (background_color, color3, color4, difficulty, text_color)
 			with open("bwconfig.dat", "wb") as out_file:
-				pickle.dump(data, file)
+				pickle.dump(data, out_file)
 		
 		# Update colors when any button pressed
 		def press_button(sender):
