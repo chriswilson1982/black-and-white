@@ -38,7 +38,8 @@ no_white_sound = 'digital:PowerUp11'
 new_game_sound = 'digital:PowerUp5'
 flip_sound = 'digital:PowerUp4'
 reds_away = 'digital:ThreeTone1'
-star_sound = 'digital:HighDown'
+star_bonus_sound = 'digital:PowerUp3'
+star_sound = 'digital:PhaserUp7'
 star_away_sound = 'digital:PhaserDown3'
 
 
@@ -420,7 +421,6 @@ class Game (Scene):
 		
 		if self.star_square:
 			if self.star_square.state >= 3:
-                                sound.play_effect(star_sound)
                                 self.sparkle(color1, self.star_square.position, image='shp:Star', spread = 40, z_position = 0.99)
 				p_list = []
 				for item in (self.p1_count, self.p2_count, self.p3_count):
@@ -436,6 +436,7 @@ class Game (Scene):
 				powerup.run_action(A.sequence(A.wait(1.4), A.scale_to(1.5, 0.2, TIMING_BOUNCE_IN_OUT), A.scale_to(1, 0.2)))
 			
 				if powerup == self.score:
+					sound.play_effect(star_bonus_sound)
 					self.score.text = str(int(self.score.text)+ self.level)
 					self.ten = LabelNode("+"+str(self.level), font = ('Helvetica-bold', 30), position = self.star_square.position + (0, 30), color = color1, z_position = 0.81)
 					self.add_child(self.ten)
@@ -445,6 +446,7 @@ class Game (Scene):
 						self.sparkle(color4, item.position, image='shp:Star') 
 						item.run_action(A.sequence(A.scale_to(1.2, 0.4), A.scale_to(1, 0.4)))
 				else:
+					sound.play_effect(star_sound)
 					powerup.text = str(int(powerup.text) + 1)
 		
 		for bg in self.bg_list:
