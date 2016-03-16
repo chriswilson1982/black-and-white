@@ -24,7 +24,7 @@ all_colors = (color1, color2, color3, color4)
 #---Screen Size Setup
 rows = 10
 cols = 6
-screen_w, screen_h = get_screen_size()
+screen_w, screen_h = min(get_screen_size()), max(get_screen_size())
 centre = (screen_w / 2.0, screen_h / 2.0)
 square_size = int(screen_w / 8 - 4) # Useful!
 top_left = (screen_w / 2.0 - square_size * (cols / 2.0 - 0.5), (screen_h / 2 + square_size * (rows / 2.0 - 0.5)))
