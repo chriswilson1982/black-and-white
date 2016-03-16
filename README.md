@@ -39,7 +39,7 @@ Points are awarded for maximising the number of squares in the path, and points 
 
 ##### Settings
 
-The cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.
+The cog '⚙' icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.
 
 ##### Highscores
 
