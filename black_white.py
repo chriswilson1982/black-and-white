@@ -2,7 +2,7 @@
 
 #---Black & White: A Game by Chris Wilson
 
-#---Last updated: 15 March 2016
+#---Last updated: 16 March 2016
 
 from scene import *
 from math import pi
