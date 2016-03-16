@@ -94,6 +94,9 @@ starting_powerups = 9 - difficulty * 3
 instructions = "The goal is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the eight surrounding squares.\n\nWhen you are ready, press the central button at the bottom of the screen. This will happen automatically if the timer expires, as shown by the circle at the bottom.\n\nIf successful, tapping the timer will proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level! Tapping the exit icon at the top right will exit the game.\n\n--- POWER-UPS ---\n\nThere are three power-ups at the top of the screen. You can get more by collecting stars. The power-ups are as follows:\n\n1) Toggle all squares\n\n2) Unlock a tapped square\n\n3) Toggle a single square (and not its neighbours)\n\nThey can be very helpful, but not using them may have other advantages...\n\n--- SCORING ---\n\nPoints are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). It's possible to lose points in a given round, but you might need to in order to progress!\n\n--- SETTINGS ---\n\nThe cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.\n\n--- HIGHSCORES ---\n\nThe highscore table can be viewed by tapping the icon in the bottom right. There is a separate table for each difficulty setting.\n\n--- GENERAL INFO ---\n\nBlack & White was created by Chris Wilson using the iOS app Pythonista, by Ole Zorn. Thanks to GitHub contributors cclauss and omz."
 
 
+def make_texture(icon_name='Cog'):
+	return Texture('typ{}:{}'.format('w' if text_color else 'b', icon_name))
+
 #---Class: Game
 class Game (Scene):
 	
@@ -122,27 +125,18 @@ class Game (Scene):
 		self.add_child(self.title)
 		
 		# Settings Button
-		tex_set = Texture('typ{}:Cog'.format('w' if text_color else 'b'))
-		self.settings = SpriteNode(tex_set, position =(20, screen_h - 20), scale = 0.6)
+		self.settings = SpriteNode(make_texture('Cog'), position =(20, screen_h - 20), scale = 0.6)
 		self.settings.z_position = 0.9
 		self.add_child(self.settings)
 		
 		# Exit Button
-		if text_color == 0:
-			tex_ex = Texture('typb:Cross')
-		elif text_color == 1:
-			tex_ex = Texture('typw:Cross')
-		self.exit_icon = SpriteNode(tex_ex, position =(screen_w - 20, screen_h - 20), scale = 0.6)
+		self.exit_icon = SpriteNode(make_texture('Cross'), position =(screen_w - 20, screen_h - 20), scale = 0.6)
 		self.exit_icon.color = text_color
 		self.exit_icon.z_position = 0.9
 		self.add_child(self.exit_icon)
 		
 		# Highscore Button
-		if text_color == 0:
-			tex_hs = Texture('typb:Group')
-		elif text_color == 1:
-			tex_hs = Texture('typw:Group')
-		self.highscore_button = SpriteNode(tex_hs, position = (screen_w - 20, 20), scale = 0.6)
+		self.highscore_button = SpriteNode(make_texture('Group'), position = (screen_w - 20, 20), scale = 0.6)
 		self.highscore_button.z_position = 0.9
 		self.add_child(self.highscore_button)
 		
@@ -269,8 +263,8 @@ class Game (Scene):
 		self.add_child(self.backdrop4)
 		
 		bd5 = ui.Path().rounded_rect(0, 0, square_size * 2 - 10, 40, 4)
-		bd4.fill()
-		bd4.close()
+		bd5.fill()
+		bd5.close()
 		self.backdrop5 = ShapeNode(bd5, stroke_color = color2, position = (screen_w / 2, 40), size = (2 * square_size - 10, 40))
 		self.backdrop5.line_width = 2
 		self.backdrop5.z_position = 0.85
@@ -366,18 +360,18 @@ class Game (Scene):
 		sound.play_effect(button_sound)
 		for square in self.squares:
 			# Start the process with the square beside the start point
-			if square.row == self.start.row and square.col == 1 and square.state == 2:
-				square.state = 3
-				square.color = color4
-				self.go(square)
-			# Lose if starting square is not white!	
-			elif square.row == self.start.row and square.col == 1 and square.state != 2:
-				self.losing()
+			if square.row == self.start.row and square.col == 1:
+				if square.state == 2:
+					square.state = 3
+					square.color = color4
+					self.go(square)
+				else:  # Lose if starting square is not white!
+					self.losing()
 
 	# Check for adjacent squares through grid to make a path (uses a double-ended queue)
 	def go(self, start_square):
 		self.green_list.append(start_square)
-		while len(self.green_list):
+		while self.green_list:
 			square = self.green_list.pop(randint(0, len(self.green_list) - 1))
 			square.run_action(toggle_action)
 			square.state = 3
@@ -778,9 +772,8 @@ class Game (Scene):
 		scores.append([number, my_name])
 		scores.sort(reverse=True)
 		scores = scores[:10]
-		in_file = open("bwsave"+str(difficulty)+".dat", "wb")
-		pickle.dump(scores, in_file)
-		in_file.close()
+		with open("bwsave"+str(difficulty)+".dat", "wb") as out_file:
+			pickle.dump(scores, out_file)
 
 	# Get top score (not currently used)
 	def get_high_score(self, rank):
@@ -927,11 +920,8 @@ class Game (Scene):
 				square.alpha = 1
 			else:
 				square.alpha = 0.9
-				
-		if self.unlock:
-			self.powerup2_bg.color = color3
-		elif not self.unlock:
-			self.powerup2_bg.color = color2
+
+		self.powerup2_bg.color = color3 if self.unlock else color2
 		
 		if self.can_flip:
 			self.powerup3_bg.color = color1
@@ -1049,15 +1039,10 @@ class Game (Scene):
 			for item in (self.backdrop, self.backdrop2):
 				item.stroke_color = text_color
 			
-			if text_color == 0:
-				self.exit_icon.texture = Texture('typb:Cross')
-				self.settings.texture = Texture('typb:Cog')
-				self.highscore_button.texture = Texture('typb:Group')
-			elif text_color == 1:
-				self.exit_icon.texture = Texture('typw:Cross')
-				self.settings.texture = Texture('typw:Cog')
-				self.highscore_button.texture = Texture('typw:Group')
-				
+			self.exit_icon.texture = make_texture('Cross')
+			self.settings.texture = make_texture('Cog')
+			self.highscore_button.texture = make_texture('Group')
+
 			color3 = color_3.background_color
 			color4 = color_4.background_color
 			
@@ -1078,10 +1063,9 @@ class Game (Scene):
 			self.new_game(self.win)
 			
 			# Configuration data saved for next startup
-			data = [background_color, color3, color4, difficulty, text_color]
-			file = open("bwconfig.dat", "wb")
-			pickle.dump(data, file)
-			file.close()
+			data = (background_color, color3, color4, difficulty, text_color)
+			with open("bwconfig.dat", "wb") as out_file:
+				pickle.dump(data, file)
 		
 		# Update colors when any button pressed
 		def press_button(sender):
