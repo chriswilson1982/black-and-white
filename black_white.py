@@ -359,6 +359,7 @@ class Game (Scene):
 	#---Other Functions
 	# GO button pressed!
 	def commit(self):
+		self.stop_squares_moving()
 		self.can_play = False
 		sound.play_effect(button_sound)
 		for square in self.squares:
@@ -449,7 +450,6 @@ class Game (Scene):
 		for bg in self.bg_list:
 			bg.color = color4
 		self.move_counters()
-		self.destroy_crosses()
 		self.score_change(add_score, self.win)
 		
 		
@@ -480,7 +480,6 @@ class Game (Scene):
 		self.backdrop5.color = color3
 		self.level_label.text = choice(fail_text)
 		self.move_counters()
-		self.destroy_crosses()
 		self.save(score_value)
 		for bg in self.bg_list:
 			bg.color = color3
@@ -652,7 +651,6 @@ class Game (Scene):
 				cols = randrange(4, 7, 2)
 			
 		top_left = (screen_w / 2.0 - square_size * (cols / 2.0 - 0.5), (screen_h / 2 + square_size * (rows / 2.0 - 0.5)))
-		self.destroy_crosses()
 		
 		for square in self.squares:
 			bg_target = choice(self.bg_list).position
@@ -856,26 +854,16 @@ class Game (Scene):
 			# The motion is smoothed by rorating the second black mark over the leading edge of the timer
 			self.timer_mark_2.rotation = 2 * pi - (time_elapsed/time_allowed * 2 * pi)
 			
-			
 	# Destroy locked square crosses that are created when power-up 2 active
 	def destroy_crosses(self):
-		self.powerup2_bg.color = color2
 		for square in self.squares:
 			try:
 				square.red_square.run_action(A.sequence(A.scale_to(0, 0.2), A.remove()))
 			except:
 				pass
-				
-				
+	
 	# Stop animations
 	def stop_squares_moving(self):
-		self.black_count.remove_all_actions()
-		self.white_count.remove_all_actions()
-		try:
-			if self.star_square:
-				self.star_square.star_icon.remove_all_actions()
-		except:
-			pass
 		for square in self.squares:
 			square.remove_all_actions()
 			square.scale = 1
@@ -883,6 +871,13 @@ class Game (Scene):
 				square.red_square.run_action(A.remove())
 			except:
 				pass
+		try:
+			if self.star_square:
+				self.star_square.star_icon.remove_all_actions()
+		except:
+			pass
+		self.black_count.remove_all_actions()
+		self.white_count.remove_all_actions()
 	
 	# Provides particle effects
 	def sparkle(self, color, position, image = 'shp:sparkle', spread = 40, z_position = 0.6, n = 6):
@@ -1210,7 +1205,6 @@ class Game (Scene):
 		self.level_label.text = "Restore a locked square"
 		self.unlock = not self.unlock
 		if not self.unlock:
-			self.destroy_crosses()
 			self.level_label.text = "Level " + str(self.level)
 			return
 			
