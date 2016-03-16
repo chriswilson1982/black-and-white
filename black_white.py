@@ -41,6 +41,7 @@ reds_away = 'digital:ThreeTone1'
 star_bonus_sound = 'digital:PowerUp3'
 star_sound = 'digital:PhaserUp7'
 star_away_sound = 'digital:PhaserDown3'
+neg_sound = 'digital:PhaserDown3'
 
 
 #---Actions
@@ -431,12 +432,13 @@ class Game (Scene):
 				
 				powerup = choice(p_list)
 				pos = powerup.position
+				
+				self.powerup_indicator = powerup
 				self.star_square.star_icon.z_position = 0.9
 				self.star_square.star_icon.run_action(A.sequence(A.scale_to(1.2, 0.1), A.scale_to(1, 0.1), A.group(A.move_to(pos[0], pos[1], 1.5, TIMING_SINODIAL), A.fade_to(0, 1.4, TIMING_EASE_IN), A.rotate_by(2 * pi, 2)), A.remove()))
 				powerup.run_action(A.sequence(A.wait(1.4), A.scale_to(1.5, 0.2, TIMING_BOUNCE_IN_OUT), A.scale_to(1, 0.2)))
 			
 				if powerup == self.score:
-					sound.play_effect(star_bonus_sound)
 					self.score.text = str(int(self.score.text)+ self.level)
 					self.ten = LabelNode("+"+str(self.level), font = ('Helvetica-bold', 30), position = self.star_square.position + (0, 30), color = color1, z_position = 0.81)
 					self.add_child(self.ten)
@@ -446,19 +448,18 @@ class Game (Scene):
 						self.sparkle(color4, item.position, image='shp:Star') 
 						item.run_action(A.sequence(A.scale_to(1.2, 0.4), A.scale_to(1, 0.4)))
 				else:
-					sound.play_effect(star_sound)
 					powerup.text = str(int(powerup.text) + 1)
 		
 		for bg in self.bg_list:
 			bg.color = color4
 		self.move_counters()
 		self.score_change(add_score, self.win)
+		self.sound_player()
 		
 		
 	# Losing
 	def losing(self):
 		score_value = int(self.score.text)
-		sound.play_effect(fail_sound)
 		self.green_timer_background.fill_color = color3
 		self.sparkle(color3, self.start.position, image='shp:RoundRect')
 		for square in self.squares:
@@ -485,6 +486,7 @@ class Game (Scene):
 		self.save(score_value)
 		for bg in self.bg_list:
 			bg.color = color3
+		self.sound_player()
 
 
 	# Change and animate scores
@@ -539,10 +541,7 @@ class Game (Scene):
 						if int(item.text) < 9:
 							item.text = str(int(item.text) + 1)
 							item.run_action(A.sequence(A.scale_to(1.5, 0.2, TIMING_BOUNCE_IN_OUT), A.scale_to(1, 0.2)))
-				
-				sound.play_effect(no_white_sound)
 			else:
-				sound.play_effect(win_sound)
 				if total_score_change > 0:
 					self.level_label.text = choice(win_text)
 					self.total_score_change_label.text = "+" + str(total_score_change)
@@ -889,6 +888,26 @@ class Game (Scene):
 			dx, dy = uniform(-r, r), uniform(-r, r)
 			p.run_action(A.sequence(A.group(A.scale_to(0, 0.8), A.move_by(dx, dy, 0.8, TIMING_EASE_OUT_2)), A.remove()))
 			self.add_child(p)
+	
+	# Decides which sound to play at end of game
+	def sound_player(self):
+		if self.win:
+			if self.star_square and self.star_square.state >= 3:
+				if self.powerup_indicator == self.score:
+					sound.play_effect(star_bonus_sound)
+					return
+				else:
+					sound.play_effect(star_sound)
+			if self.no_whites:
+				sound.play_effect(no_white_sound)
+				return
+			if int(self.total_score_change_label.text) <= 0:
+				sound.play_effect(neg_sound)
+				return
+			sound.play_effect(win_sound)
+		else:
+			sound.play_effect(fail_sound)
+			
 		
 	#---Update
 	# Updated every frame
