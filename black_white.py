@@ -91,7 +91,23 @@ punishment_text = [
 starting_powerups = 9 - difficulty * 3
 
 #---How to Play
-instructions = "The goal is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the eight surrounding squares.\n\nWhen you are ready, press the central button at the bottom of the screen. This will happen automatically if the timer expires, as shown by the circle at the bottom.\n\nIf successful, tapping the timer will proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level! Tapping the exit icon at the top right will exit the game.\n\n--- POWER-UPS ---\n\nThere are three power-ups at the top of the screen. You can get more by collecting stars. The power-ups are as follows:\n\n1) Toggle all squares\n\n2) Unlock a tapped square\n\n3) Toggle a single square (and not its neighbours)\n\nThey can be very helpful, but not using them may have other advantages...\n\n--- SCORING ---\n\nPoints are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). It's possible to lose points in a given round, but you might need to in order to progress!\n\n--- SETTINGS ---\n\nThe cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.\n\n--- HIGHSCORES ---\n\nThe highscore table can be viewed by tapping the icon in the bottom right. There is a separate table for each difficulty setting.\n\n--- GENERAL INFO ---\n\nBlack & White was created by Chris Wilson using the iOS app Pythonista, by Ole Zorn. Thanks to GitHub contributors cclauss and omz."
+instructions = '''The goal is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the eight surrounding squares.
+When you are ready, press the central button at the bottom of the screen. This will happen automatically if the timer expires, as shown by the circle at the bottom.
+If successful, tapping the timer will proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level! Tapping the exit icon at the top right will exit the game.
+--- POWER-UPS ---
+There are three power-ups at the top of the screen. You can get more by collecting stars. The power-ups are as follows:
+1) Toggle all squares
+2) Unlock a tapped square
+3) Toggle a single square (and not its neighbours)
+They can be very helpful, but not using them may have other advantages...
+--- SCORING ---
+Points are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). It's possible to lose points in a given round, but you might need to in order to progress!
+--- SETTINGS ---
+The cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.
+--- HIGHSCORES ---
+The highscore table can be viewed by tapping the icon in the bottom right. There is a separate table for each difficulty setting.
+--- GENERAL INFO ---
+Black & White was created by Chris Wilson using the iOS app Pythonista, by Ole Zorn. Thanks to GitHub contributors cclauss and omz.'''.replace('\n', '\n\n')
 
 
 def make_texture(icon_name='Cog'):
@@ -125,12 +141,12 @@ class Game (Scene):
 		self.add_child(self.title)
 		
 		# Settings Button
-		self.settings = SpriteNode(make_texture('Cog'), position =(20, screen_h - 20), scale = 0.6)
+		self.settings = SpriteNode(make_texture('Cog'), position = (20, screen_h - 20), scale = 0.6)
 		self.settings.z_position = 0.9
 		self.add_child(self.settings)
 		
 		# Exit Button
-		self.exit_icon = SpriteNode(make_texture('Cross'), position =(screen_w - 20, screen_h - 20), scale = 0.6)
+		self.exit_icon = SpriteNode(make_texture('Cross'), position = (screen_w - 20, screen_h - 20), scale = 0.6)
 		self.exit_icon.color = text_color
 		self.exit_icon.z_position = 0.9
 		self.add_child(self.exit_icon)
@@ -402,18 +418,17 @@ class Game (Scene):
 
 	# Success
 	def winning(self):
-		black_list = [square for square in self.squares if square.state == 1]
-		white_list = [square for square in self.squares if square.state == 2]
+		square_states = [square.state for square in self.squares]
+		self.black_count.text = str(square_states.count(1))
+		self.white_count.text = str(square_states.count(2))
 		add_score = 0
 		for square in self.squares:
 			if square.state >= 3:
 				add_score += 1
 				self.sparkle(color4, square.position, image='shp:RoundRect')
-		self.black_count.text = str(len(black_list))
-		self.white_count.text = str(len(white_list))
-		
+
 		self.restart_button.texture = Texture('iob:checkmark_circled_32')
-		
+
 		if self.star_square:
 			if self.star_square.state >= 3:
                                 self.sparkle(color1, self.star_square.position, image='shp:Star', spread = 40, z_position = 0.99)
