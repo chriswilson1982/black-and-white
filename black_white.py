@@ -419,8 +419,8 @@ class Game (Scene):
 	# Success
 	def winning(self):
 		square_states = [square.state for square in self.squares]
-                self.black_count.text = str(square_states.count(1))
-                self.white_count.text = str(square_states.count(2))
+		self.black_count.text = str(square_states.count(1))
+		self.white_count.text = str(square_states.count(2))
 		add_score = 0
 		for square in self.squares:
 			if square.state >= 3:
