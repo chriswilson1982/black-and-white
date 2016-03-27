@@ -1068,6 +1068,9 @@ class Game (Scene):
 			self.timer.fill_color = background_color
 			self.green_timer_background.fill_color = color4
 			
+			for item in (self.p1, self.p2, self.p3):
+				item[3].stroke_color = color4
+			
 			difficulty = diff_selector.selected_index + 1
 			starting_powerups = 9 - difficulty * 3
 			
