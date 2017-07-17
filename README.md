@@ -13,10 +13,6 @@ Last updated: 16 March 2016
 
 Black & White is a grid-based game created using [Pythonista](http://omz-software.com/pythonista/) on iOS.
 
-<img src="https://www.dropbox.com/s/dnbvxgfrjgbjbv9/screenshot7.PNG?raw=1" alt="Screenshot" width="200"/> <img src="https://www.dropbox.com/s/g5sw78zhw54sais/screenshot2.PNG?raw=1" alt="Screenshot" width="200"/> <img src="https://www.dropbox.com/s/18114kawpuqlb7g/screenshot3.PNG?raw=1" alt="Screenshot" width="200"/> 
-
-<img src="https://www.dropbox.com/s/svozbi8u06jznux/screenshot4.PNG?raw=1" alt="Screenshot" width="200"/> <img src="https://www.dropbox.com/s/g8i562pyjlmlbne/screenshot6.PNG?raw=1" alt="Screenshot" width="200"/> <img src="https://www.dropbox.com/s/bibtorei9kxcscb/screenshot1.PNG?raw=1" alt="Screenshot" width="200"/>
-
 #### Instructions
 
 The goal is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the eight surrounding squares. 
