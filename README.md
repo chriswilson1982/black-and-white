@@ -11,7 +11,9 @@ Last updated: 16 March 2016
 
 #### About the game
 
-Black & White is a grid-based game created using [Pythonista](http://omz-software.com/pythonista/) on iOS.
+Black & White is a grid-based game created using [Pythonista](http://omz-software.com/pythonista/) on iOS. This code is intended to be used within the Pythonista app.
+
+It has also been published on the [App Store](https://geo.itunes.apple.com/gb/app/black-white-grid-based-puzzle/id1102097118?mt=8), using the [Pythonista XCode template](https://github.com/omz/PythonistaAppTemplate).
 
 #### Instructions
 
