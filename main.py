@@ -45,8 +45,6 @@ def launch_screen():
 	label1.text_color = text_color
 	label2.text_color = not text_color
 	label3.text_color = text_color
-	pythonista = v["imageview1"]
-	pythonista.image = ui.Image.named('pythonista.png')
 	circle = v["imageview2"]
 
 # Define game view so it can be loaded
