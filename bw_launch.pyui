@@ -1,0 +1,142 @@
+[
+  {
+    "selected" : false,
+    "frame" : "{{0, 0}, {320, 480}}",
+    "class" : "View",
+    "nodes" : [
+      {
+        "selected" : false,
+        "frame" : "{{115, 195}, {90, 90}}",
+        "class" : "Button",
+        "nodes" : [
+
+        ],
+        "attributes" : {
+          "uuid" : "8CE2DFFB-930D-48DD-BAA7-FC19F1A06464",
+          "name" : "button1",
+          "flex" : "LRB",
+          "corner_radius" : 0,
+          "frame" : "{{120, 224}, {80, 32}}",
+          "border_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "border_width" : 0,
+          "title" : "",
+          "action" : "start",
+          "font_bold" : false,
+          "class" : "Button",
+          "image_name" : "Frameworks\/PythonistaKit.framework\/Media\/Images\/iob\/arrow_down_c_24",
+          "font_size" : 32
+        }
+      },
+      {
+        "selected" : false,
+        "frame" : "{{115, 195}, {90, 90}}",
+        "class" : "ImageView",
+        "nodes" : [
+
+        ],
+        "attributes" : {
+          "flex" : "LRB",
+          "border_width" : 0,
+          "alpha" : 1,
+          "frame" : "{{110, 190}, {100, 100}}",
+          "tint_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+          "class" : "ImageView",
+          "uuid" : "015A89EA-76D5-458D-8BF3-1460B906941B",
+          "corner_radius" : 0,
+          "name" : "imageview2",
+          "image_name" : "Frameworks\/PythonistaKit.framework\/Media\/Images\/iob\/ios7_circle_outline_256"
+        }
+      },
+      {
+        "selected" : false,
+        "frame" : "{{6, 103}, {308, 77}}",
+        "class" : "Label",
+        "nodes" : [
+
+        ],
+        "attributes" : {
+          "flex" : "LRB",
+          "name" : "label1",
+          "font_name" : "Helvetica-Bold",
+          "frame" : "{{85, 224}, {150, 32}}",
+          "tint_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "uuid" : "5A70E5FE-C708-4131-BFE0-334F5DD3E31B",
+          "text" : "black",
+          "alignment" : "left",
+          "class" : "Label",
+          "font_size" : 60,
+          "text_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)"
+        }
+      },
+      {
+        "selected" : false,
+        "frame" : "{{6, 103}, {308, 77}}",
+        "class" : "Label",
+        "nodes" : [
+
+        ],
+        "attributes" : {
+          "uuid" : "5A70E5FE-C708-4131-BFE0-334F5DD3E31B",
+          "font_size" : 100,
+          "corner_radius" : 0,
+          "frame" : "{{85, 224}, {150, 32}}",
+          "tint_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "border_width" : 0,
+          "border_color" : "RGBA(0.089888,0.089888,0.089888,1.000000)",
+          "alignment" : "center",
+          "text_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+          "text" : "&",
+          "alpha" : 0.8,
+          "font_name" : "Helvetica-Bold",
+          "class" : "Label",
+          "name" : "label2",
+          "flex" : "LRB"
+        }
+      },
+      {
+        "selected" : false,
+        "frame" : "{{6, 103}, {308, 77}}",
+        "class" : "Label",
+        "nodes" : [
+
+        ],
+        "attributes" : {
+          "flex" : "LRB",
+          "font_size" : 60,
+          "text_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "frame" : "{{85, 224}, {150, 32}}",
+          "tint_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "uuid" : "5A70E5FE-C708-4131-BFE0-334F5DD3E31B",
+          "text" : "white",
+          "alignment" : "right",
+          "class" : "Label",
+          "name" : "label3",
+          "font_name" : "Helvetica-Bold"
+        }
+      },
+      {
+        "selected" : false,
+        "frame" : "{{123, 340}, {74, 98}}",
+        "class" : "ImageView",
+        "nodes" : [
+
+        ],
+        "attributes" : {
+          "flex" : "LRT",
+          "frame" : "{{110, 190}, {100, 100}}",
+          "class" : "ImageView",
+          "name" : "imageview1",
+          "uuid" : "3B20B349-02ED-4433-A79B-39FB6154CB66"
+        }
+      }
+    ],
+    "attributes" : {
+      "name" : "",
+      "enabled" : true,
+      "border_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+      "background_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+      "tint_color" : "RGBA(0.000000,0.478000,1.000000,1.000000)",
+      "flex" : ""
+    }
+  }
+]
