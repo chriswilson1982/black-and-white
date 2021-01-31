@@ -1,0 +1,99 @@
+[
+  {
+    "nodes" : [
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{6, 142}, {363, 32}}",
+        "class" : "Label",
+        "attributes" : {
+          "uuid" : "8349A881-B324-4FA0-BE40-7233A5D26ED7",
+          "font_size" : 20,
+          "corner_radius" : 0,
+          "frame" : "{{85, 224}, {150, 32}}",
+          "border_width" : 0,
+          "custom_attributes" : "{\"corner_radius\":12}",
+          "alignment" : "center",
+          "text" : "...",
+          "font_name" : "HelveticaNeue-Medium",
+          "class" : "Label",
+          "name" : "champion",
+          "flex" : "W"
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{6, 40}, {363, 40}}",
+        "class" : "Label",
+        "attributes" : {
+          "flex" : "WB",
+          "font_size" : 24,
+          "frame" : "{{45, 104}, {150, 32}}",
+          "uuid" : "0F6B0676-381B-4DF9-B793-C23AC8753D58",
+          "class" : "Label",
+          "alignment" : "center",
+          "text" : "High Scores",
+          "name" : "title_label",
+          "font_name" : "HelveticaNeue-Bold"
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{6, 220}, {363, 441}}",
+        "class" : "TableView",
+        "attributes" : {
+          "flex" : "WH",
+          "data_source_items" : "Row 1\nRow 2\nRow 3",
+          "row_height" : 44,
+          "frame" : "{{20, 20}, {200, 200}}",
+          "uuid" : "C2D524D6-16D0-4AD0-93B4-2B7BEE70436E",
+          "background_color" : "RGBA(1.0, 1.0, 1.0, 1.0)",
+          "data_source_number_of_lines" : 1,
+          "data_source_font_size" : 18,
+          "class" : "TableView",
+          "data_source_delete_enabled" : true,
+          "name" : "score_table"
+        },
+        "selected" : true
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{6, 110}, {363, 32}}",
+        "class" : "Label",
+        "attributes" : {
+          "flex" : "W",
+          "font_size" : 22,
+          "frame" : "{{85, 224}, {150, 32}}",
+          "uuid" : "82B7FCDA-B5AE-4E11-9DE5-0CBF6C39A63A",
+          "class" : "Label",
+          "alignment" : "center",
+          "text" : "—— CHAMPION ——",
+          "custom_attributes" : "{\"color\" : color4 }",
+          "name" : "champion_label",
+          "font_name" : "Inconsolata-Bold"
+        },
+        "selected" : false
+      }
+    ],
+    "frame" : "{{0, 0}, {375, 667}}",
+    "class" : "View",
+    "attributes" : {
+      "tint_color" : "RGBA(0.000000,0.478000,1.000000,1.000000)",
+      "enabled" : true,
+      "border_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+      "background_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+      "name" : "",
+      "flex" : ""
+    },
+    "selected" : false
+  }
+]

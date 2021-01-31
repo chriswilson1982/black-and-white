@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;" />
+    <meta name="description" content="Black &amp; White - a grid-based iOS game by Chris Wilson">
+    <meta name="author" content="Chris Wilson">
+    <style type="text/css">
+        body {
+            font-family: helvetica;
+            text-align: center;
+            margin-bottom: 100pt;
+            margin-bottom: 100pt;
+        }
+
+        h1 {
+            font-size: 70pt;
+        }
+
+        h2 {
+            font-size: 50pt;
+        }
+        
+        p {
+		        font-size: 32pt;
+		        line-height: 140%;
+        }
+
+        span#main {
+            vertical-align: middle;
+            display: inline-block;
+            width: 90%;
+            line-height: 120%;
+        }
+
+        img.info {
+            border: 2px solid black;
+            border-radius: 20pt;
+            margin-top: 20pt;
+            margin-bottom: 20pt;
+        }
+
+        img.button {
+            vertical-align: middle;
+        }
+
+        img.powerup {
+            vertical-align: middle;
+            margin-right: 20pt;
+        }
+        
+        hr {
+		        margin-top: 60pt;
+            margin-bottom: 60pt;
+        }
+    </style>
+    <title>Black &amp; White Information</title>
+</head>
+
+<body>
+    <h1>Welcome to<br />Black & White!</h1>
+    <span id="main" align="justify">
+        <p>Black & White is a grid-based puzzle game. The goal is to score points by clearing a path across the grid against the clock. To do this you must tap squares strategically to toggle the colour of the surrounding squares.</p>
+        <hr>
+        <h2>Instructions</h2>
+        <p>Here are the different elements on the screen. The numbers in the grid show the number of black and white squares.</p>
+        <img class="info" src="{{info1.txt}}" , width=100%>
+        <p>Tapping a square locks it and toggles the colour of the eight surrounding squares, as shown below. Now the path is clear!</p>
+        <img class="info" src="{{info2.txt}}" , width=100%>
+        <p style="vertical-align:middle">When the path is clear, tap this big button at the bottom to test it!</p>
+        <p align=center><img class="button" src="{{button.txt}}" , width=200px></p>
+        <p>This will happen automatically when the time runs out!</p>
+        <img class="info" src="{{info3.txt}}" , width=100%>
+        <h2>Scoring</h2>
+        <p>Points are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones that you have tapped). It's possible to score nothing or even lose points in a level. Your reward will be a more difficult 4x4 grid in the next level!</p>
+        <img class="info" src="{{info4.txt}}" , width=100%>
+        <p>If successful, tap the timer to proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level!</p>
+        <hr>
+        <h2>Power-Ups</h2>
+        <p>There are three power-ups at the top of the screen. You can get more by collecting bonus stars. There are three types of power-ups:
+        <h4>
+            <p><img class="powerup" src="{{pu1.txt}}"> Flip all squares</p>
+            <p><img class="powerup" src="{{pu2.txt}}"> Unlock a tapped square</p>
+            <p><img class="powerup" src="{{pu3.txt}}"> Flip a single square</p>
+        </h4>
+        <p>They can be very helpful, but not using them may have other advantages...</p>
+        <hr>
+        <h2>Bonuses</h2>
+        <p>You will get a bonus score if you leave no white squares in the grid. If your score is greater than the number of squares in the grid you will also get bonus power-ups!</p>
+        <p>Collecting stars will give you more power-ups, but they give an even better reward if your power-ups are already full.</p>
+        <hr>
+        <h2>Settings</h2>
+        <p>The cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects the timer and power-ups), set a custom colour scheme and change your name for the highscore table.</p>
+        <hr>
+        <h2>High Scores</h2>
+        <p>The global highscore table can be viewed by tapping the icon in the top right. There is a separate table for each difficulty level.</p>
+        <hr>
+        <h2>Acknowledgements</h2>
+        <p>Black & White was created by Chris Wilson using the iOS app Pythonista by Ole Zorn. Thanks to GitHub contributors cclauss and omz.</p>
+    </span>
+
+</body>
+
+</html>

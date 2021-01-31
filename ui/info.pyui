@@ -1,0 +1,80 @@
+[
+  {
+    "nodes" : [
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{0, 0}, {320, 480}}",
+        "class" : "WebView",
+        "attributes" : {
+          "flex" : "WH",
+          "border_width" : 0,
+          "frame" : "{{60, 140}, {200, 200}}",
+          "uuid" : "7EDBD8DF-3A19-4B4A-A051-8FC7CE34F034",
+          "background_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+          "class" : "WebView",
+          "scales_to_fit" : true,
+          "corner_radius" : 0,
+          "name" : "webview"
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{0, 402}, {320, 78}}",
+        "class" : "View",
+        "attributes" : {
+          "flex" : "WT",
+          "border_width" : 0,
+          "frame" : "{{110, 190}, {100, 100}}",
+          "class" : "View",
+          "background_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+          "uuid" : "1F32EF33-8DA9-41CC-B6DA-6A1B3D7D796B",
+          "corner_radius" : 0,
+          "border_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+          "name" : "view1"
+        },
+        "selected" : false
+      },
+      {
+        "nodes" : [
+
+        ],
+        "frame" : "{{220, 420}, {80, 40}}",
+        "class" : "Button",
+        "attributes" : {
+          "uuid" : "0137D761-9FEC-4D38-8918-F70EC2648799",
+          "flex" : "LT",
+          "corner_radius" : 12,
+          "background_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)",
+          "frame" : "{{148, 318}, {80, 32}}",
+          "tint_color" : "RGBA(0.022472,0.022472,0.022472,1.000000)",
+          "border_width" : 2,
+          "border_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+          "custom_attributes" : "",
+          "title" : "Close",
+          "action" : "close",
+          "font_bold" : true,
+          "class" : "Button",
+          "name" : "close_button",
+          "font_size" : 20
+        },
+        "selected" : false
+      }
+    ],
+    "frame" : "{{0, 0}, {320, 480}}",
+    "class" : "View",
+    "attributes" : {
+      "flex" : "",
+      "enabled" : true,
+      "tint_color" : "RGBA(0.000000,0.478000,1.000000,1.000000)",
+      "border_color" : "RGBA(0.000000,0.000000,0.000000,1.000000)",
+      "name" : "",
+      "background_color" : "RGBA(1.000000,1.000000,1.000000,1.000000)"
+    },
+    "selected" : false
+  }
+]
