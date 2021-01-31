@@ -1,31 +1,21 @@
-# Black & White
-## A grid-based game for Pythonista on iOS
+# Black & Whitec
+## A colourful grid-based puzzle game for Pythonista on iOS by Chris Wilson
 
-Author: Chris Wilson (chriswilson1982)
-
-Contributors: cclauss, omz
-
-Last updated: 16 March 2016
-
-***
-
-## About the game
-
-Black & White is a grid-based game created using [Pythonista](http://omz-software.com/pythonista/) on iOS. This code is intended to be used within the Pythonista app.
-
-It has also been published on the [App Store](https://geo.itunes.apple.com/gb/app/black-white-grid-based-puzzle/id1102097118?mt=8), using the [Pythonista XCode template](https://github.com/omz/PythonistaAppTemplate).
+Black & White is a colourful grid-based puzzle game created using [Pythonista](http://omz-software.com/pythonista/) on iOS. This code is intended to be used within the Pythonista app.
 
 ## Instructions
 
-The goal is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the eight surrounding squares. 
+The aim is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the colour of the eight surrounding squares. 
 
-When you are ready, press the central button at the bottom of the screen. This will happen automatically if the timer expires, as shown by the circle at the bottom.
+When the path is cleared, tap the central button at the bottom of the screen. This happens automatically when the timer runs out.
 
-If successful, tapping the timer will proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level! Tapping the exit icon at the top right will exit the game.
+If successful, tapping the timer will proceed to the next level. Otherwise, tap it to start a new game. The timer gets quicker with each level!
+
+Tapping the exit icon at the top right will exit the game.
 
 ### Power-Ups
 
-There are three power-ups at the top of the screen. You can get more by collecting stars. They can be very helpful, but not using them may have other advantages! The power-ups are ae shown below:
+There are three power-ups at the top of the screen. You can get more by collecting stars. They can be very helpful, but not using them may have other advantages! The power-ups effects are as follows:
 
 1. Toggle all squares
 2. Unlock a tapped square
@@ -33,12 +23,18 @@ There are three power-ups at the top of the screen. You can get more by collecti
 
 ### Scoring
 
-Points are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). It's possible to lose points in a given round, but you might need to in order to progress!
+Points are awarded for maximising the number of squares in the path, and points are deducted for unused white squares and locked squares (ones you have tapped). Your score in a round may end up negative!
 
 ### Settings
 
-The cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects time and power-ups) and set a custom color scheme.
+The cog icon in the top left will take you to the settings screen where you can select a difficulty level (which affects timer speed and power-ups), change the username and set a custom colour scheme.
 
 ### Highscores
 
-The highscore table can be viewed by tapping the icon in the bottom right. There is a separate table for each difficulty setting.
+The highscore table can be viewed by tapping the icon in the top right. There is a separate table for each difficulty setting. Scores are stored for each user name using a local SQLite database.
+
+***
+
+For more detailed instructions, you can view the in-game help screen by tapping the **?** button on the settings screen.
+
+Black & White has also been published on the [App Store](https://geo.itunes.apple.com/gb/app/black-white-grid-based-puzzle/id1102097118?mt=8), using the [Pythonista XCode template](https://github.com/omz/PythonistaAppTemplate). As of 2021, it is proving very challenging to update and so not had a new version in a few years. It will probably be removed from the App Store eventually.
