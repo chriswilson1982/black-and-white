@@ -1,4 +1,4 @@
-# Black & Whitec
+# Black & White
 ## A colourful grid-based puzzle game for Pythonista on iOS by Chris Wilson
 
 Black & White is a colourful grid-based puzzle game created using [Pythonista](http://omz-software.com/pythonista/) on iOS. This code is intended to be used within the Pythonista app.
