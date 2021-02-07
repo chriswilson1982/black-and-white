@@ -3,13 +3,13 @@
 
 Black & White is a colourful grid-based puzzle game created using [Pythonista](http://omz-software.com/pythonista/) on iOS. This code is intended to be used within the Pythonista app.
 
-### Configuration
-
-The *config.ini* file contains modifiable configuration information. There are currently settings for two size classes in the *[SMALL_SIZE]* and *[LARGE_SIZE]* sections. These may need to be adjused for different screen sizes. You can also customise in-game messages and other aspects of the game.
-
 ***
 
-## Instructions
+### Configuration
+
+The *config.ini* file contains modifiable configuration information. There are currently settings for two size classes in the *[LAYOUT_SMALL]* and *[LAYOUT_LARGE]* sections. These may need to be adjused for different screen sizes. You can also customise in-game messages and other aspects of the game.
+
+### Instructions
 
 - The aim is to score points by clearing a white path across the black and white grid. Tapping a square locks it and toggles the colour of the eight surrounding squares. 
 
@@ -34,4 +34,4 @@ The high score leaderboard can be viewed by tapping the icon in the top right. T
 
 ***
 
-Black & White has also been published on the [App Store](https://geo.itunes.apple.com/gb/app/black-white-grid-based-puzzle/id1102097118?mt=8), using the [Pythonista XCode template](https://github.com/omz/PythonistaAppTemplate). As of 2021, it is proving very challenging to update so it has not had an update in a few years and will probably be removed from the App Store eventually.
+Black & White has also been published on the [App Store](https://geo.itunes.apple.com/gb/app/black-white-grid-based-puzzle/id1102097118?mt=8), using the [Pythonista XCode template](https://github.com/omz/PythonistaAppTemplate). As of 2021, it is proving very challenging to update so it has not had an update in a few years and will probably be removed from the App Store eventually. The [product website](https://www.chrisandkathy.co.uk/blackwhite/) includes further information and a global high score leaderboard.
