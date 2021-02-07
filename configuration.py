@@ -1,22 +1,26 @@
 # coding: utf-8
+"""Load and save settings and configuration.
 
-# Load and save settings and configuration (see config/config.ini)
+Theae function load and save user-modifiable and configuration settings.
+Configuration file: config/config.ini
+"""
 
 from ast import literal_eval
 import configparser
 
 
 def load_config():
+    """Return configuration parser for other functions."""
     parser = configparser.ConfigParser()
     parser.read('config/config.ini')
     return parser
 
 
 def get_settings():
-    # Returns main settings from configuration file as a tuple
+    """Return settings from configuration file as a tuple."""
     parser = load_config()
     settings = parser['SETTINGS']
-    # ast.literal_eval returns a tuple from a string
+    # ast.literal_eval returns a tuple from the string
     background_color = literal_eval(settings['background_color'])
     color3 = literal_eval(settings['color3'])
     color4 = literal_eval(settings['color4'])
@@ -29,7 +33,7 @@ def get_settings():
 
 
 def save_settings(settings_tuple):
-    # Saves modified settings back to configuation file
+    """Save modified settings to configuation file"""
     background_color = settings_tuple[0]
     color3 = settings_tuple[1]
     color4 = settings_tuple[2]
@@ -54,20 +58,20 @@ def save_settings(settings_tuple):
 
 
 def get_layout(size_class):
-    # Returns layout data from configuration file as a tuple
+    """Return layout data from configuration file as a tuple"""
     parser = load_config()
     section = ('LAYOUT_SMALL', 'LAYOUT_LARGE')[size_class]
     return (literal_eval(value) for (option, value) in parser.items(section))
 
 
 def get_sounds():
-    # Returns sound names from configuration file as a tuple
+    """Return sound names from configuration file as a tuple"""
     parser = load_config()
     section = 'SOUNDS'
     return (value for (option, value) in parser.items(section))
 
 
 def get_text(section):
-    # Returns text choices from configuration file as a tuple
+    """Return text choices from configuration file as a tuple"""
     parser = load_config()
     return (value for (option, value) in parser.items(section))

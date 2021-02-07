@@ -1,13 +1,13 @@
 # coding: utf-8
-
-# Game launcher
+"""Entry point to launch game."""
 
 from black_white import *
 
 
-def go():
+def start_game():
+    """Run game in portrait orientation."""
     run(Game(), PORTRAIT)
 
 
 if __name__ == '__main__':
-    go()
+    start_game()

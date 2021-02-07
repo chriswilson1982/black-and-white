@@ -1,108 +1,68 @@
 # coding: utf-8
+"""Main game module.
 
-# Main game file
+Scene subclass (Game) handles all game logic and events.
+"""
 
+# Import Scene and UI modules
 from scene import *
+import ui
+
+# Import standard modules
 from math import pi
 from random import choice, randint, randrange, random, uniform
 from time import sleep, time
 from datetime import date
-from database import check_final_score, get_all_scores
-from configuration import get_settings, save_settings, get_layout, get_sounds, get_text
 import dialogs
 import pickle
 import sound
 import os
-import ui
 import webbrowser
 
-# ---Load Configuation
-background_color, color3, color4, text_color, difficulty, username, first_time = get_settings()
-
-# ---Color Setup
-color1 = "#000000"  # Black
-color2 = "#ffffff"  # White
-colors = (color1, color2)
-all_colors = (color1, color2, color3, color4)
-
-# ---Screen layout and size classes
-rows = 10
-cols = 6
-screen_w, screen_h = min(get_screen_size()), max(get_screen_size())
-centre = (screen_w / 2, screen_h / 2)
-
-# Set size class
-if screen_w >= 768:
-    # Larger screens
-    size_class = 1
-    square_size = int(screen_w / 14)
-elif screen_w >= 375:
-    # Smaller screens
-    size_class = 0
-    square_size = int(screen_w / 8 - 4)
-
-# Get variable values from config file
-title_font_size, title_from_top, powerup_from_top, bottom_vertical, label_height, label_font_size, counter_font_size, score_label_font_size, score_label_gap, top_button_top_gap, top_button_side_gap, top_button_scale = get_layout(size_class)
-
-# Values derived from above variables
-title_position = (screen_w / 2, screen_h - title_from_top)
-powerup_vertical = screen_h - powerup_from_top
-
-# Top left is starting point for grid
-top_left = (centre[0] - square_size * (cols / 2.0 - 0.5),
-            (centre[1] + square_size * (rows / 2.0 - 0.5)))
-
-# ---Sounds
-tap_sound, button_sound, win_sound, fail_sound, no_white_sound, new_game_sound, flip_sound, reds_away, star_bonus_sound, star_sound, star_away_sound, neg_sound, timer_tick, powerup_sound = get_sounds()
-
-# ---Actions
-A = Action
-pressed_action_1 = A.sequence(A.scale_to(0.7, 0.1), A.scale_to(1, 0.1))
-pressed_action_2 = A.sequence(A.scale_to(0.9, 0.1), A.scale_to(1, 0.1))
-pressed_action_3 = A.sequence(A.scale_to(0.5, 0.1), A.scale_to(0.7, 0.1))
-toggle_action_1 = A.sequence(
-    A.group(A.scale_to(0.7, 0.1), A.rotate_to(pi, 0.3)), A.scale_to(1.0, 0.1))
-toggle_action_2 = A.sequence(
-    A.group(A.scale_to(0.7, 0.1), A.rotate_to(0, 0.3)), A.scale_to(1.0, 0.1))
-score_action_1 = A.sequence(A.group(A.move_by(
-    0, centre[1] - 100, 1, TIMING_EASE_OUT_2), A.fade_to(1, 0.7)), A.wait(2), A.fade_to(0, 0.5), A.remove())
-score_action_2 = A.sequence(A.group(A.move_by(
-    0, centre[1] - 100, 1, TIMING_EASE_OUT_2), A.fade_to(0.7, 0.7)), A.wait(2), A.fade_to(0, 0.5), A.remove())
-
-# ---Text Archive
-win_text = list(get_text('WIN_TEXT'))
-fail_text = list(get_text('FAIL_TEXT'))
-zero_text = list(get_text('ZERO_TEXT'))
-neg_text = list(get_text('NEG_TEXT'))
-no_white_text = list(get_text('NO_WHITE_TEXT'))
-reward_text = list(get_text('REWARD_TEXT'))
-punishment_text = list(get_text('PUNISHMENT_TEXT'))
-hurry_text = list(get_text('HURRY_TEXT'))
-zero_fail_text = list(get_text('ZERO_FAIL_TEXT'))
-neg_fail_text = list(get_text('NEG_FAIL_TEXT'))
-quick_fail_text = list(get_text('QUICK_FAIL_TEXT'))
-
-# ---Power-Ups
-starting_powerups = 9 - difficulty * 3
-
-# ---Texture function
+# Import custom modules
+from database import check_final_score, get_all_scores
+from square import Square
+from start_finish import StartFinish
+from powerup import Powerup
+from configuration import save_settings
+from common import *
 
 
-def make_texture(icon_name='Cog'):
-    return Texture('typ{}:{}'.format('w' if text_color else 'b', icon_name))
-
-
-# ---Class: Game
+# Class: Game
 class Game (Scene):
+    """Main scene subclass.
 
+    Manages all aspects of the game mechanics.
+    """
+
+    # Score property (get).
+    @property
+    def score(self):
+        """Score property (get)."""
+        return self._score
+
+    # Score property (set).
+    @score.setter
+    def score(self, value):
+        """Score property (set).
+
+        Automatically updates score label.
+        """
+        self._score = value
+        self.score_label.text = str(self._score)
+
+    # Game setup method.
     def setup(self):
+        """Game setup method."""
         # Background color
         self.background_color = background_color
-
         self.alpha = 0
+
+        # Score (see score properties at top of class)
+        self._score = 0
         self.run_action(A.fade_to(1, 0.2))
 
-        # ---Setup: Background of random squares
+        # Background of random squares
         bg = ui.Path().rounded_rect(0, 0, square_size, square_size, 4)
         bg.fill()
         bg.close()
@@ -116,136 +76,61 @@ class Game (Scene):
             self.add_child(self.random_bg)
             self.bg_list.append(self.random_bg)
 
-        # ---Setup: Title, score, labels and icons
-
-        # Title
+        # Title (words)
         self.title = LabelNode("black   white", font=(
             'Helvetica Neue', title_font_size), color=text_color, position=title_position)
         self.title.z_position = 1.0
         self.add_child(self.title)
 
+        # Title (&)
         self.title2 = LabelNode("&", font=(
             'Helvetica-bold', title_font_size), color=text_color, position=title_position)
         self.title2.z_position = 1.0
         self.add_child(self.title2)
 
         # Settings Button
-        self.settings = SpriteNode(make_texture('Cog'), position=(
+        self.settings = SpriteNode(make_texture('Cog', text_color), position=(
             top_button_side_gap, screen_h - top_button_top_gap), scale=top_button_scale)
         self.settings.z_position = 0.9
         self.add_child(self.settings)
 
         # Highscore Button
-        self.highscore_button = SpriteNode(make_texture('Group'), position=(
+        self.highscore_button = SpriteNode(make_texture('Group', text_color), position=(
             screen_w - top_button_side_gap, screen_h - top_button_top_gap), scale=top_button_scale)
         self.highscore_button.z_position = 0.9
         self.add_child(self.highscore_button)
 
-        # Level and message text and background
+        # Set starting level
+        self.level = 0
+
+        # Message background
         self.level_bg = SpriteNode(color=background_color, position=(
             screen_w / 2, label_height), size=(screen_w, 26), alpha=0.7)
         self.level_bg.z_position = 0.8
         self.add_child(self.level_bg)
 
-        # Set starting level
-        self.level = 0
-
+        # Message label
         self.level_label = LabelNode("Level 1", font=(
             'Helvetica-bold', 20), color=text_color, position=(screen_w / 2, label_height))
         self.level_label.z_position = 0.9
         self.add_child(self.level_label)
 
-        # ---Setup: Power-Ups
-        pu = ui.Path().rounded_rect(0, 0, 50, 28, 4)
-        pu.fill()
-        pu.stroke()
-        pu.line_width = 1
-        pu.close()
-
-        pu_max = ui.Path().rounded_rect(0, 0, 52, 30, 4)
-        pu_max.stroke()
-        pu_max.line_width = 8
-        pu_max.close()
-
         # Power-Up 1
-        self.powerup1_bg = ShapeNode(pu, color=color2, position=(
-            screen_w / 2 - square_size * 2, powerup_vertical), size=(square_size, 40))
-        self.powerup1_bg.stroke_color = color1
-        self.powerup1_bg.alpha = 0.9
-        self.powerup1_bg.z_position = 0.8
-        self.add_child(self.powerup1_bg)
-
-        self.p_max_1 = ShapeNode(pu_max, color=(
-            1, 1, 1, 0), position=self.powerup1_bg.position, size=(54, 32), alpha=0, z_position=0.79)
-        self.p_max_1.stroke_color = color4
-        self.add_child(self.p_max_1)
-
-        self.powerup1 = SpriteNode(texture=Texture('typb:Shuffle'), position=(
-            self.powerup1_bg.position - (10, 0)), scale=0.7)
-        self.powerup1.z_position = 0.9
-        self.add_child(self.powerup1)
-
-        self.p1_count = LabelNode(str(starting_powerups), font=(
-            'Helvetica', 20), color="black", position=self.powerup1.position + (24, 0))
-        self.p1_count.z_position = 0.9
-        self.add_child(self.p1_count)
-
-        self.p1 = (self.powerup1_bg, self.powerup1,
-                   self.p1_count, self.p_max_1)
+        self.powerup_1 = Powerup(1, starting_powerups, (
+            screen_w / 2 - square_size * 2, powerup_vertical))
+        self.add_child(self.powerup_1)
 
         # Power-Up 2
-        self.powerup2_bg = ShapeNode(
-            pu, color=color2, position=self.powerup1_bg.position + (square_size * 2, 0), size=(square_size, 40))
-        self.powerup2_bg.stroke_color = color1
-        self.powerup2_bg.alpha = 0.9
-        self.powerup2_bg.z_position = 0.8
-        self.add_child(self.powerup2_bg)
-
-        self.p_max_2 = ShapeNode(pu_max, color=(
-            1, 1, 1, 0), position=self.powerup2_bg.position, size=(54, 32), alpha=0, z_position=0.79)
-        self.p_max_2.stroke_color = color4
-        self.add_child(self.p_max_2)
-
-        self.powerup2 = SpriteNode(texture=Texture('typb:Cross'), position=(
-            self.powerup2_bg.position - (10, 0)), scale=0.7)
-        self.powerup2.z_position = 0.9
-        self.add_child(self.powerup2)
-
-        self.p2_count = LabelNode(str(starting_powerups), font=(
-            'Helvetica', 20), color="black", position=self.powerup2.position + (24, 0))
-        self.p2_count.z_position = 0.9
-        self.add_child(self.p2_count)
-
-        self.p2 = (self.powerup2_bg, self.powerup2,
-                   self.p2_count, self.p_max_2)
+        self.powerup_2 = Powerup(2, starting_powerups,
+                                 (screen_w / 2, powerup_vertical))
+        self.add_child(self.powerup_2)
 
         # Power-Up 3
-        self.powerup3_bg = ShapeNode(
-            pu, color=color2, position=self.powerup1_bg.position + (square_size * 4, 0), size=(square_size, 40))
-        self.powerup3_bg.stroke_color = color1
-        self.powerup3_bg.alpha = 0.9
-        self.powerup3_bg.z_position = 0.8
-        self.add_child(self.powerup3_bg)
+        self.powerup_3 = Powerup(3, starting_powerups, (
+            screen_w / 2 + square_size * 2, powerup_vertical))
+        self.add_child(self.powerup_3)
 
-        self.p_max_3 = ShapeNode(pu_max, color=(
-            1, 1, 1, 0), position=self.powerup3_bg.position, size=(54, 32), alpha=0, z_position=0.79)
-        self.p_max_3.stroke_color = color4
-        self.add_child(self.p_max_3)
-
-        self.powerup3 = SpriteNode(texture=Texture('typb:Contrast'), position=(
-            self.powerup3_bg.position - (10, 0)), scale=0.7)
-        self.powerup3.z_position = 0.9
-        self.add_child(self.powerup3)
-
-        self.p3_count = LabelNode(str(starting_powerups), font=(
-            'Helvetica', 20), color="black", position=self.powerup3.position + (24, 0))
-        self.p3_count.z_position = 0.9
-        self.add_child(self.p3_count)
-
-        self.p3 = (self.powerup3_bg, self.powerup3,
-                   self.p3_count, self.p_max_3)
-
-        # ---Setup: Square Counters
+        # Square counters (black and white)
         self.black_count = LabelNode("0", font=(
             'Helvetica', counter_font_size), color=color2, position=(-100, -100), z_position=0.55)
         self.add_child(self.black_count)
@@ -254,29 +139,26 @@ class Game (Scene):
             'Helvetica', counter_font_size), color=color1, position=(-100, -100), z_position=0.55)
         self.add_child(self.white_count)
 
-        # Empty list of squares in the grid
+        # Empty list of squares for the grid
         self.squares = []
 
-        # ---Setup: Start and End Points
+        # Start and End Points
         self.start = StartFinish(row=randint(1, rows), type="start")
         self.add_child(self.start)
-
         self.finish = StartFinish(row=randint(1, rows), type="finish")
         self.add_child(self.finish)
-
         self.backdrop3a = SpriteNode(position=self.start.position, size=(
             8 * square_size, square_size + 10), color=text_color)
         self.backdrop3a.anchor_point = (0.965, 0.5)
         self.backdrop3a.z_position = 0.4
         self.add_child(self.backdrop3a)
-
         self.backdrop3b = SpriteNode(position=self.finish.position, size=(
             8 * square_size, square_size + 10), color=text_color)
         self.backdrop3b.anchor_point = (0.035, 0.5)
         self.backdrop3b.z_position = 0.4
         self.add_child(self.backdrop3b)
 
-        # ---Setup: GO Button
+        # Commit Button
         bd4 = ui.Path().rounded_rect(0, 0, square_size * 2, 50, 8)
         bd4.fill()
         bd4.close()
@@ -284,7 +166,6 @@ class Game (Scene):
             screen_w / 2, bottom_vertical), color=color1, size=(square_size * 2, 50))
         self.backdrop4.z_position = 0.8
         self.add_child(self.backdrop4)
-
         bd5 = ui.Path().rounded_rect(0, 0, square_size * 2 - 10, 40, 4)
         bd5.fill()
         bd5.close()
@@ -293,28 +174,24 @@ class Game (Scene):
         self.backdrop5.line_width = 2
         self.backdrop5.z_position = 0.85
         self.add_child(self.backdrop5)
-
-        self.commit_button = SpriteNode(texture=make_texture('Check'), color=text_color, position=(
+        self.commit_button = SpriteNode(texture=make_texture('Check', text_color), color=text_color, position=(
             screen_w / 2, bottom_vertical), size=(square_size, square_size), z_position=0.9)
         self.add_child(self.commit_button)
 
-        # ---Setup: Restart Button and Timer
+        # Restart Button and Timer
         circle1 = ui.Path()
         circle1.add_arc(0, 0, 24, 0, pi * 2)
         circle1.line_width = 4
         circle1.stroke()
         circle1.close()
-
         circle2 = ui.Path()
         circle2.add_arc(0, 0, 15, 0, pi * 2)
         circle2.close()
-
         circle3 = ui.Path()
         circle3.add_arc(0, 0, 26, 0, 2 * pi)
         circle3.line_width = 2
         circle3.stroke()
         circle3.close()
-
         tex_res = Texture('iob:ios7_refresh_32')
         self.restart_button = SpriteNode(texture=tex_res, position=(
             screen_w / 2 + square_size * 2.5, bottom_vertical), scale=1)
@@ -327,7 +204,6 @@ class Game (Scene):
         self.green_timer_background.rotation = pi / 2
         self.green_timer_background.z_position = 0.18
         self.add_child(self.green_timer_background)
-
         self.white_timer_background = ShapeNode(
             circle2, fill_color=color4, position=self.restart_button.position)
         self.white_timer_background.z_position = 0.35
@@ -354,24 +230,23 @@ class Game (Scene):
         self.timer_mark.anchor_point = (0.5, 0)
         self.timer_mark.z_position = 0.3
         self.add_child(self.timer_mark)
-
         self.timer_mark_2 = ShapeNode(
             line, color1, color1, position=self.restart_button.position, size=(4, 25))
         self.timer_mark_2.anchor_point = (0.5, 0)
         self.timer_mark_2.z_position = 0.3
         self.add_child(self.timer_mark_2)
-
         self.timer_ring = ShapeNode(circle3)
         self.timer_ring.alpha = 0
 
+        # Low time warning flag
         self.warning_flag = False
 
-        # ---Setup: Score
-        self.score = LabelNode("0", font=('Helvetica-bold', 40), color=text_color, position=(
+        # Score label
+        self.score_label = LabelNode("0", font=('Helvetica-bold', 40), color=text_color, position=(
             screen_w / 2 - square_size * 2.5, bottom_vertical), size=(square_size, square_size), z_position=0.9)
-        self.add_child(self.score)
+        self.add_child(self.score_label)
 
-        # ---Setup: Initialise variables
+        # Initialise variables needed for running of game
         self.can_play = True
         self.can_settings = True
         self.can_highscore = True
@@ -387,17 +262,18 @@ class Game (Scene):
 
         # Start a new game!
         self.new_game(False)
-        if username == "Player":
+        if not username or username == "Player":
             self.get_name()
 
-    # Prompt for name if first startup
+    # Prompt user to enter name on first startup.
     @ui.in_background
     def get_name(self):
+        """Prompt user to enter name on first startup."""
         global username
         sleep(1)
         try:
             username = dialogs.input_alert(
-                "Enter your name", "This will be used on the high score tables!")
+                "Enter your name", "This will be used on the high score leaderboard!")
             if username == '':
                 username = 'Player'
         except KeyboardInterrupt:
@@ -408,10 +284,9 @@ class Game (Scene):
                     text_color, difficulty, username, first_time)
         save_settings(new_data)
 
-    # ---Other Functions
-
-    # Big button tapped!
+    # Handle tap on main commit button (bottom centre).
     def commit(self):
+        """Handle tap on main commit button (bottom centre)."""
         self.stop_squares_moving()
         self.destroy_crosses()
         self.can_play = False
@@ -429,8 +304,12 @@ class Game (Scene):
                 else:  # Lose if starting square is not white!
                     self.losing()
 
-    # Check for adjacent squares through grid to make a path (uses a double-ended queue)
+    # Check for valid path of white squares through grid.
     def go(self, start_square):
+        """Check for valid path of white squares through grid.
+
+        Uses a double-ended queue data structure.
+        """
         def cascade(node, progress):
             if progress == 1 and node.state == 3 and self.win:
                 node.state = 4
@@ -458,8 +337,9 @@ class Game (Scene):
         # Once list is empty, check win status
         self.check_win()
 
-    # Check if successful by checking state of square adjacent to end point
+    # Check state of square beside end point to determine win status.
     def check_win(self):
+        """Check state of square beside end point to determine win status."""
         self.can_play = False
         self.can_flip = False
         self.unlock = False
@@ -476,8 +356,9 @@ class Game (Scene):
                     return
         self.losing()
 
-    # Success!
+    # Win confirmed!
     def winning(self):
+        """Win confirmed!"""
         square_states = [square.state for square in self.squares]
         self.black_count.text = str(square_states.count(1))
         self.white_count.text = str(square_states.count(2))
@@ -486,24 +367,24 @@ class Game (Scene):
             if square.state >= 3:
                 add_score += 1
 
-        self.commit_button.texture = make_texture('Right')
+        self.commit_button.texture = make_texture('Right', text_color)
         self.restart_button.texture = Texture('iob:checkmark_circled_32')
 
         if self.star_square:
             if self.star_square.state >= 3:
                 self.sparkle(text_color, self.star_square.position,
-                             image='shp:Star', spread=40, z_position=0.99)
+                             image='shp:Star', spread=40, z_position=1.1)
                 p_list = []
-                for item in (self.p1_count, self.p2_count, self.p3_count):
-                    if int(item.text) < 9:
+                for item in (self.powerup_1, self.powerup_2, self.powerup_3):
+                    if item.count < 9:
                         p_list.append(item)
                 if not p_list:
-                    p_list.append(self.score)
+                    p_list.append(self.score_label)
 
-                powerup = choice(p_list)
-                pos = powerup.position
+                target = choice(p_list)
+                pos = target.position
 
-                self.powerup_indicator = powerup
+                self.powerup_indicator = target
                 if text_color == 1:
                     self.star_square.star_icon.scale = 0.8
                     self.star_square.star_icon.texture = Texture('typw:Star')
@@ -511,39 +392,40 @@ class Game (Scene):
                 self.star_square.star_icon.z_position = 0.9
                 self.star_square.star_icon.run_action(A.sequence(A.scale_by(0.2, 0.1), A.scale_by(-0.2, 0.1), A.group(A.move_to(
                     pos[0], pos[1], 1.8, TIMING_SINODIAL), A.fade_to(0, 1.8, TIMING_EASE_IN), A.rotate_by(2 * pi, 2)), A.remove()))
-                if powerup != self.score:
-                    powerup.run_action(A.sequence(A.wait(1.8), A.scale_to(
-                        1.5, 0.2, TIMING_BOUNCE_IN_OUT), A.scale_to(1, 0.2)))
+                if target != self.score_label:
+                    target.run_action(A.sequence(A.wait(1.8), A.scale_to(
+                        1.2, 0.2, TIMING_BOUNCE_IN_OUT), A.scale_to(1, 0.2)))
 
-                if powerup == self.score:
-                    self.score.text = str(int(self.score.text) + self.level)
+                if target == self.score_label:
+                    self.score += self.level
                     self.ten = LabelNode("+" + str(self.level), font=('Helvetica-bold', 30),
                                          position=self.star_square.position + (0, 30), color=text_color, z_position=0.81)
                     self.add_child(self.ten)
                     self.ten.run_action(A.sequence(A.wait(0.2), A.group(A.move_to(
-                        pos[0], pos[1] + 30, 1.8, TIMING_SINODIAL), A.fade_to(0, 1.9, TIMING_EASE_IN)), A.remove()))
+                        pos[0], pos[1] + 50, 1.8, TIMING_SINODIAL), A.fade_to(0, 1.9, TIMING_EASE_IN)), A.remove()))
 
-                    for item in (self.p_max_1, self.p_max_2, self.p_max_3):
+                    for item in (self.powerup_1, self.powerup_2, self.powerup_3):
                         self.sparkle(color4, item.position, image='shp:Star')
                         item.run_action(A.sequence(
                             A.scale_to(1.2, 0.4), A.scale_to(1, 0.4)))
                 else:
-                    def powerup_increment(node, progress):
-                        if progress == 1 and int(node.text) < 9:
+                    def powerup_increment(pu, progress):
+                        if progress == 1 and pu.count < 9:
                             sound.play_effect(powerup_sound)
-                            node.text = str(int(node.text) + 1)
-                    powerup.run_action(A.call(powerup_increment, 1.8))
+                            pu.count += 1
+                    target.run_action(A.call(powerup_increment, 1.8))
 
         for bg in self.bg_list:
             bg.color = color4
         self.backdrop5.color = color4
         self.move_counters()
         self.score_change(add_score, self.win)
-        self.sound_player()
+        self.end_sound()
 
-    # Losing
+    # Loss confirmed.
     def losing(self):
-        score_value = int(self.score.text)
+        """Lose confirmed."""
+        score_value = self.score
         self.green_timer_background.fill_color = color3
         for square in self.squares:
             if square.star:
@@ -558,9 +440,9 @@ class Game (Scene):
                 square.run_action(A.sequence(A.wait(random() + 1), A.group(A.scale_to(0, 3), A.fade_to(
                     0, 2), A.move_to(bg_target[0], bg_target[1], 2, TIMING_SINODIAL)), A.remove()))
         self.start.color = color3
-        self.score.color = color3
+        self.score_label.color = color3
         self.backdrop5.color = color3
-        self.commit_button.texture = make_texture('Cross')
+        self.commit_button.texture = make_texture('Cross', text_color)
 
         if self.level == 1:
             self.level_label.text = choice(quick_fail_text)
@@ -575,10 +457,11 @@ class Game (Scene):
         for bg in self.bg_list:
             bg.color = color3
         self.can_settings = True
-        self.sound_player()
+        self.end_sound()
 
-    # Change and animate scores
+    # Handle score change animation.
     def score_change(self, num, win):
+        """Handle score change animation."""
         if num > 0:
             text = "+" + str(num)
         elif num < 0:
@@ -623,7 +506,7 @@ class Game (Scene):
             total_score_change = num - int(self.white_count.text) - red_count
 
             self.total_score_change_label = LabelNode("+" + str(total_score_change), font=(
-                'Helvetica-bold', 40), color=text_color, position=self.score.position)
+                'Helvetica-bold', 40), color=text_color, position=self.score_label.position)
             self.total_score_change_label.z_position = 0.6
 
             if self.no_whites:
@@ -631,16 +514,16 @@ class Game (Scene):
                     self.level_label.text = choice(no_white_text)
                 else:
                     self.reward = True
-                    if int(self.p1_count.text) + int(self.p2_count.text) + int(self.p3_count.text) < 18:
+                    if self.powerup_1.count + self.powerup_2.count + self.powerup_3.count < 18:
                         self.level_label.text = choice(reward_text)
                     else:
                         self.level_label.text = choice(no_white_text)
 
-                    for item in (self.p1_count, self.p2_count, self.p3_count):
-                        if int(item.text) < 9:
-                            item.text = str(int(item.text) + 1)
+                    for item in (self.powerup_1, self.powerup_2, self.powerup_3):
+                        if item.count < 9:
+                            item.count += 1
                             item.run_action(A.sequence(A.scale_to(
-                                1.5, 0.2, TIMING_BOUNCE_IN_OUT), A.scale_to(1, 0.2)))
+                                1.2, 0.2, TIMING_BOUNCE_IN_OUT), A.scale_to(1, 0.2)))
                             self.sparkle(
                                 color4, item.position - (square_size / 4.0, 0), image='shp:RoundRect')
             else:
@@ -660,19 +543,20 @@ class Game (Scene):
                     self.total_score_change_label.color = color3
                     self.punishment = True
         else:
-            total_score_change = -1 * int(self.score.text)
+            total_score_change = -1 * self.score
             self.total_score_change_label = LabelNode(str(total_score_change), font=(
-                'Helvetica-bold', 40), color=color3, position=self.score.position)
+                'Helvetica-bold', 40), color=color3, position=self.score_label.position)
         self.add_child(self.total_score_change_label)
 
-        self.score.text = str(int(self.score.text) + total_score_change)
+        self.score += total_score_change
         self.total_score_change_label.run_action(A.sequence(A.fade_to(1, 0.1), A.wait(
             1), A.move_to(screen_w / 2, bottom_vertical, 2, TIMING_EASE_IN_OUT), A.remove()))
-        self.score.run_action(A.sequence(
+        self.score_label.run_action(A.sequence(
             A.fade_to(0, 0), A.wait(1.8), A.fade_to(1, 0.5)))
 
-    # Start a new game
+    # Start a new game.
     def new_game(self, win):
+        """Start a new game."""
         self.can_restart = False
         for item in (self.timer_mark, self.timer_mark_2):
             item.alpha = 1
@@ -683,7 +567,7 @@ class Game (Scene):
         self.restart_button.texture = Texture('iob:ios7_refresh_32')
 
         # Alert if score would be reset
-        if self.can_play and self.score.text != '0':
+        if self.can_play and self.score != 0:
             for square in self.squares:
                 square.rotation = 0
             try:
@@ -732,29 +616,29 @@ class Game (Scene):
         except:
             pass
 
-        # Reset score and level if previous round not won
+        # Reset score, level and powerups if previous round not won
         if not win:
-            self.score.text = "0"
-            self.level = 1
+            self.score = 0
+            self.level = 0
             self.level_label.text = 'Level ' + str(self.level)
-            self.p1_count.text = str(starting_powerups)
-            self.p2_count.text = str(starting_powerups)
-            self.p3_count.text = str(starting_powerups)
             self.can_settings = True
+            for pu in (self.powerup_1, self.powerup_2, self.powerup_3):
+                pu.count = starting_powerups
 
         # Move black & white square counters
         self.move_counters()
 
-        self.score.color = text_color
+        self.score_label.color = text_color
         self.backdrop5.color = color4
-        self.commit_button.texture = make_texture('Check')
+        self.commit_button.texture = make_texture('Check', text_color)
         self.restart_button.remove_all_actions()
 
-        # New game sound!
+        # New game sound
         sound.play_effect(new_game_sound)
 
-    # Make a new grid of squares
+    # MCreate a new grid of squares.
     def make_grid(self):
+        """Create a new grid of squares."""
         global rows, cols, top_left
 
         if self.punishment:
@@ -863,8 +747,9 @@ class Game (Scene):
         self.can_flip = False
         self.unlock = False
 
-    # Move black and white square counters
+    # Move the number labels that count black and white squares.
     def move_counters(self):
+        """Move the number labels that count black and white squares."""
         black_list = [square for square in self.squares if square.state == 1]
         white_list = [square for square in self.squares if square.state == 2]
         self.black_count.text = str(len(black_list))
@@ -896,11 +781,16 @@ class Game (Scene):
             self.white_count.position = (-100, -100)
 
         if not wc:
-            self.no_whites = True  # Set no_whites flag for bonus
+            # Set no_whites flag for bonus
+            self.no_whites = True
 
-    # Save score abd check if bew high score
+    # Save score and check if new high score.
     @ui.in_background
     def save(self, number):
+        """Save score and check if new high score.
+
+        Get result flag (nil, "g" or "p") from check_final_score method in database module.
+        """
         result = check_final_score(username, number, difficulty)
 
         if result == "g":
@@ -920,9 +810,10 @@ class Game (Scene):
             except KeyboardInterrupt:
                 pass
 
-    # Show global highscore table
+    # Show high score leaderboard.
     @ui.in_background
     def display_scores(self):
+        """Show high score leaderboard."""
         all_scores = get_all_scores(difficulty)
         if not all_scores:
             sound.play_effect(fail_sound)
@@ -975,9 +866,13 @@ class Game (Scene):
         self.highscore_button.alpha = 1
         self.timestamp += self.t - paused_time
 
-    # Use timestamp for countdown. This is called with each update
-
+    # Use timestamp for countdown.
     def timing(self):
+        """Use timestamp for countdown.
+
+        This is called with each update.
+        """
+
         if self.can_play:
             time_allowed = 61 - (difficulty * 10) - \
                 (self.level * 0.5 * difficulty)
@@ -1027,9 +922,10 @@ class Game (Scene):
             self.timer_mark_2.rotation = 2 * pi - \
                 (time_elapsed / time_allowed * 2 * pi)
 
-    # Low time warning sound
+    # Low time warning sound.
     @ui.in_background
     def timer_sound(self):
+        """Low time warning sound."""
         self.countdown_flag = True
         self.highscore_button.alpha = 0.2
         marker = 5
@@ -1043,8 +939,12 @@ class Game (Scene):
             else:
                 return
 
-    # Destroy locked square crosses that are created when power-up 2 active
+    # Destroy locked square crosses.
     def destroy_crosses(self):
+        """Destroy locked square crosses.
+
+        These are created when power-up 2 is active.
+        """
         for square in self.squares:
             try:
                 square.cross.run_action(A.sequence(
@@ -1052,8 +952,9 @@ class Game (Scene):
             except:
                 pass
 
-    # Stop square animations
+    # Stop square animations.
     def stop_squares_moving(self):
+        """Stop square animations."""
         for square in self.squares:
             square.remove_all_actions()
             square.scale = 1
@@ -1065,22 +966,24 @@ class Game (Scene):
         self.black_count.remove_all_actions()
         self.white_count.remove_all_actions()
 
-    # Provides particle effects
+    # Particle effects.
     def sparkle(self, color, position, image='shp:sparkle', spread=40, z_position=0.6, n=6):
+        """Particle effects."""
         for i in range(n):
             p = SpriteNode(image, position=position, color=color,
-                           z_position=z_position, alpha=0.7)
+                           z_position=z_position, alpha=0.5)
             r = spread
             dx, dy = uniform(-r, r), uniform(-r, r)
             p.run_action(A.sequence(A.group(A.scale_to(0, 0.8), A.move_by(
                 dx, dy, 0.8, TIMING_EASE_OUT_2)), A.remove()))
             self.add_child(p)
 
-    # Decides which sound to play at end of game
-    def sound_player(self):
+    # Determine which sound to play at end of game.
+    def end_sound(self):
+        """Determine which sound to play at end of game."""
         if self.win:
             if self.star_square and self.star_square.state >= 3:
-                if self.powerup_indicator == self.score:
+                if self.powerup_indicator == self.score_label:
                     sound.play_effect(star_bonus_sound)
                     return
                 else:
@@ -1095,11 +998,9 @@ class Game (Scene):
         else:
             sound.play_effect(fail_sound)
 
-    # ---Update
-
-    # Updated every frame
-
+    # Updated every frame.
     def update(self):
+        """Updated every frame."""
         for bg in self.bg_list:
             if self.bg_list.index(bg) % 2 == 0:
                 bg.position += (gravity()[0] * 0.1 *
@@ -1116,33 +1017,30 @@ class Game (Scene):
             else:
                 square.alpha = 1.0
 
-        self.powerup2_bg.color = color3 if self.unlock else color2
+        self.powerup_2.fill_color = color3 if self.unlock else color2_trans
 
         if self.can_flip:
-            self.powerup3_bg.color = color1
-            self.powerup3.texture = Texture('typw:Contrast')
-            self.p3_count.color = color2
+            self.powerup_3.fill_color = color1
+            self.powerup_3.icon.texture = Texture('typw:Contrast')
+            self.powerup_3.label.color = color2
         else:
-            self.powerup3_bg.color = color2
-            self.powerup3.texture = Texture('typb:Contrast')
-            self.p3_count.color = color1
-
-        if self.unlock:
-            self.powerup2_bg.color = color3
-        else:
-            self.powerup2_bg.color = color2
+            self.powerup_3.fill_color = color2_trans
+            self.powerup_3.icon.texture = Texture('typb:Contrast')
+            self.powerup_3.label.color = color1
 
         # Powerup max indicators
-        for item in (self.p1, self.p2, self.p3):
-            item[3].alpha = int(item[2].text >= "9")
+        for item in (self.powerup_1, self.powerup_2, self.powerup_3):
+            item.max_outline.alpha = int(item.count >= 9)
 
         self.timing()  # Call timing method every frame
 
-    # ---Settings Menu
-
-    # Settings menu - calls a pyui file
+    # Settings menu.
 
     def settings_options(self):
+        """Settings menu.
+
+        Calls ui/settings.pyui file.
+        """
         # Cannot change settings while game in progress
         if not self.can_settings:
             return
@@ -1154,15 +1052,18 @@ class Game (Scene):
         # Initialise target box for color sliders
         target = None
 
-        # Cancel without applying new settings
+        # Cancel button tapped.
         def cancel(sender):
+            """Cancel button tapped."""
             sound.play_effect(button_sound)
             view.close()
             self.new_game(self.win)
 
-        # Shown instructions
+        # Show instructions.
         def how_to_play(sender):
+            """Show instructions."""
             def close(sender):
+                """Close settings."""
                 sound.play_effect(button_sound)
                 view2.close()
                 return
@@ -1180,8 +1081,9 @@ class Game (Scene):
                         html = html.replace("{{" + f + "}}", b64_string)
             webview.load_html(html)
 
-        # Reset to default color scheme
+        # Reset to default color scheme.
         def default(sender):
+            """Reset to default color scheme."""
             global target
             sound.play_effect(button_sound)
             text_color_selector.selected_index = 0
@@ -1202,8 +1104,9 @@ class Game (Scene):
             blue.value = 0.5
             target = None
 
-        # Reset to current active color scheme
+        # Reset to current active color scheme.
         def current(sender):
+            """Reset to current active color scheme."""
             global target
             sound.play_effect(button_sound)
             text_color_selector.selected_index = text_color
@@ -1224,8 +1127,12 @@ class Game (Scene):
             blue.value = 0.5
             target = None
 
-        # Selected color applied to target box continuously while sliders moved
+        # Get color from slider values.
         def get_color(sender):
+            """Get color from slider values.
+
+            Selected color applied to target box continuously while sliders moved.
+            """
             global target
             try:
                 target.background_color = (
@@ -1236,8 +1143,9 @@ class Game (Scene):
             except:
                 pass
 
-        # Set which color box the color sliders apply to
+        # Set which color box the color sliders apply to.
         def set_target(sender):
+            """Set which color box the color sliders apply to."""
             global target
             sound.play_effect(button_sound)
             for item in color_group:
@@ -1253,8 +1161,12 @@ class Game (Scene):
             green.value = target.background_color[1]
             blue.value = target.background_color[2]
 
-        # Settings only applied if save button pressed
+        # Save button tapped.
         def save_settings_button(sender):
+            """Save button tapped.
+
+            Apply selected configuration to game.
+            """
             global all_colors
             global text_color
             global color3
@@ -1268,14 +1180,14 @@ class Game (Scene):
             sound.play_effect(button_sound)
 
             text_color = text_color_selector.selected_index
-            for item in (self.title, self.title2, self.score, self.level_label, self.backdrop3a, self.backdrop3b, self.commit_button):
+            for item in (self.title, self.title2, self.score_label, self.level_label, self.backdrop3a, self.backdrop3b, self.commit_button, self.settings, self.highscore_button):
                 item.color = text_color
 
             for item in (self.backdrop, self.backdrop2):
                 item.stroke_color = text_color
 
-            self.settings.texture = make_texture('Cog')
-            self.highscore_button.texture = make_texture('Group')
+            self.settings.texture = make_texture('Cog', text_color)
+            self.highscore_button.texture = make_texture('Group', text_color)
 
             color3 = color_3.background_color
             color4 = color_4.background_color
@@ -1287,8 +1199,8 @@ class Game (Scene):
             self.timer.fill_color = background_color
             self.green_timer_background.fill_color = color4
 
-            for item in (self.p1, self.p2, self.p3):
-                item[3].stroke_color = color4
+            for pu in (self.powerup_1, self.powerup_2, self.powerup_3):
+                pu.max_outline.stroke_color = color4
 
             difficulty = diff_selector.selected_index + 1
             starting_powerups = 9 - difficulty * 3
@@ -1306,8 +1218,9 @@ class Game (Scene):
                     text_color, difficulty, username, first_time)
             save_settings(data)
 
-        # Update colors when any button pressed
+        # Update colors when any button pressed.
         def press_button(sender):
+            """Update colors when any button pressed."""
             sound.play_effect(button_sound)
             for item in (c3_button, c4_button, bg_button):
                 item.tint_color = text_color_selector.selected_index
@@ -1359,12 +1272,9 @@ class Game (Scene):
         name_box.text = username
         color_group = (color_3, bg_color, color_4)
 
-    # ---Touch Events
-
-    # Handles touch events and runs appropriate function
-
+    # Handle touch events.
     def touch_began(self, touch):
-
+        """Handle touch events."""
         # Touch on GO button
         if touch.location in self.backdrop5.bbox and self.can_play:
             self.touch_go()
@@ -1379,15 +1289,15 @@ class Game (Scene):
             self.touch_highscore()
 
         # Touch on Powerup 1
-        elif touch.location in self.powerup1_bg.bbox and self.can_play and int(self.p1_count.text) > 0:
+        elif touch.location in self.powerup_1.bbox:
             self.touch_pu1()
 
         # Touch on Powerup 2
-        elif touch.location in self.powerup2_bg.bbox and self.can_play and int(self.p2_count.text) > 0:
+        elif touch.location in self.powerup_2.bbox:
             self.touch_pu2()
 
         # Touch on powerup 3
-        elif touch.location in self.powerup3_bg.bbox and self.can_play and int(self.p3_count.text) > 0:
+        elif touch.location in self.powerup_3.bbox:
             self.touch_pu3()
 
         # Touch on settings
@@ -1398,8 +1308,9 @@ class Game (Scene):
         elif self.can_play:
             self.touch_squares(touch)
 
-    # Touch big button!
+    # Touch on commit button.
     def touch_go(self):
+        """Touch commit button.."""
         self.commit_button.run_action(pressed_action_1)
         self.backdrop4.run_action(pressed_action_1)
         self.backdrop5.run_action(pressed_action_1)
@@ -1407,8 +1318,9 @@ class Game (Scene):
         self.stop_squares_moving()
         self.commit()
 
-    # Touch Restart Button
+    # Touch restart button.
     def touch_restart(self):
+        """Touch on restart button."""
         if self.can_restart:
             self.restart_button.run_action(pressed_action_1)
             self.stop_squares_moving()
@@ -1418,26 +1330,28 @@ class Game (Scene):
             sound.play_effect(button_sound)
             self.new_game(self.win)
 
-    # Touch Highscore Button
+    # Touch highscore button.
     def touch_highscore(self):
+        """Touch highscore button."""
         self.highscore_button.run_action(pressed_action_3)
         self.highscore_button.alpha = 0.2
         sound.play_effect(button_sound)
         # self.stop_squares_moving()
         self.display_scores()
 
-    # Touch Power-Up 1
+    # Touch Power-Up 1.
     def touch_pu1(self):
+        """Touch Power-Up 1."""
+        if not self.can_play or self.powerup_1.count == 0:
+            return
         self.stop_squares_moving()
         self.destroy_crosses()
         self.unlock = False
         self.can_flip = False
         self.level_label.text = "Flip all squares"
-        self.powerup1.run_action(pressed_action_3)
-        self.powerup1_bg.run_action(pressed_action_2)
-        self.p1_count.run_action(pressed_action_2)
+        self.powerup_1.run_action(pressed_action_2)
         sound.play_effect(flip_sound)
-        self.p1_count.text = str(int(self.p1_count.text) - 1)
+        self.powerup_1.count -= 1
         for square in self.squares:
             if square.rotation == 0:
                 square.run_action(toggle_action_1)
@@ -1455,9 +1369,11 @@ class Game (Scene):
                 square.go_star()
         self.move_counters()
 
-    # Touch Power-Up 2
-
+    # Touch Power-Up 2.
     def touch_pu2(self):
+        """Touch Power-Up 2."""
+        if not self.can_play or self.powerup_2.count == 0:
+            return
         self.stop_squares_moving()
         self.destroy_crosses()
         self.can_flip = False
@@ -1471,9 +1387,7 @@ class Game (Scene):
         if not self.unlock:
             self.level_label.text = "Level " + str(self.level)
             return
-            self.powerup2.run_action(pressed_action_3)
-        self.powerup2_bg.run_action(pressed_action_2)
-        self.p2_count.run_action(pressed_action_2)
+            self.powerup_2.run_action(pressed_action_2)
 
         for square in self.squares:
             if square.state == 0 and self.unlock and square.last_state == 1:
@@ -1494,15 +1408,16 @@ class Game (Scene):
                 square.cross.run_action(A.repeat(A.sequence(A.scale_to(
                     0.85, 0.4, TIMING_EASE_IN_OUT), A.scale_to(0.95, 0.4, TIMING_EASE_IN_OUT)), 0))
 
-    # Touch Power-Up 3
+    # Touch Power-Up 3.
     def touch_pu3(self):
+        """Touch Power-Up 3."""
+        if not self.can_play or self.powerup_3.count == 0:
+            return
         self.unlock = False
         self.stop_squares_moving()
         self.destroy_crosses()
         self.level_label.text = "Flip a single square"
-        self.powerup3.run_action(pressed_action_3)
-        self.powerup3_bg.run_action(pressed_action_2)
-        self.p3_count.run_action(pressed_action_2)
+        self.powerup_3.run_action(pressed_action_2)
         sound.play_effect(button_sound)
         self.can_flip = not self.can_flip
         if not self.can_flip:
@@ -1511,6 +1426,7 @@ class Game (Scene):
                 square.remove_all_actions()
                 square.scale = 1
             return
+
         for item in (self.black_count, self.white_count):
             item.run_action(A.repeat(A.sequence(A.scale_to(
                 0.85, 0.4, TIMING_EASE_IN_OUT), A.scale_to(0.95, 0.4, TIMING_EASE_IN_OUT)), 0))
@@ -1525,8 +1441,9 @@ class Game (Scene):
                 square.run_action(A.repeat(A.sequence(A.scale_to(
                     0.85, 0.4, TIMING_EASE_IN_OUT), A.scale_to(0.95, 0.4, TIMING_EASE_IN_OUT)), 0))
 
-    # Touch grid squares
+    # Touch grid squares.
     def touch_squares(self, touch):
+        """Touch grid squares."""
         self.destroy_crosses()
         for square in self.squares:
 
@@ -1545,7 +1462,7 @@ class Game (Scene):
 
                 elif self.can_flip:
                     # Toggle single square
-                    self.p3_count.text = str(int(self.p3_count.text) - 1)
+                    self.powerup_3.count -= 1
                     self.stop_squares_moving()
 
                 self.move_counters()
@@ -1556,7 +1473,7 @@ class Game (Scene):
             elif touch.location in square.bbox and square.state == 0 and self.unlock:
                 sound.play_effect(reds_away)
 
-                self.p2_count.text = str(int(self.p2_count.text) - 1)
+                self.powerup_2.count -= 1
                 square.press = False
                 square.state = square.last_state
                 if square.state == 1:
@@ -1572,122 +1489,3 @@ class Game (Scene):
                 self.unlock = False
                 self.can_flip = False
                 self.level_label.text = "Level " + str(self.level)
-
-
-# ---Class: Square
-# Squares making up the grid
-class Square (SpriteNode):
-    def __init__(self, row, col, position, size, state, color):
-        self.row = row
-        self.col = col
-        self.position = position
-        self.size = square_size, square_size
-        self.color = color
-        self.z_position = 0.2
-        self.state = state
-        self.last_state = state
-        self.press = False
-        self.star = False
-        if self.state == 1:
-            self.color = color1
-        if self.state == 2:
-            self.color = color2
-
-    def set_color(self):
-        self.color = all_colors[self.state - 1]
-
-    # Find neighbouring white squares
-    def white_neighbours(self, square_list):
-        white_neighbours = []
-        for s in square_list:
-            if (((s.row == self.row - 1) and (s.col == self.col)) or ((s.row == self.row + 1) and (s.col == self.col)) or ((s.row == self.row) and (s.col == self.col - 1)) or ((s.row == self.row) and (s.col == self.col + 1))) and s.state == 2:
-                white_neighbours.append(s)
-        return white_neighbours
-
-    # Find squares to toggle when square pressed
-    def toggle_neighbours(self, squares):
-        for square in squares:
-            if square.row >= self.row - 1 and square.row <= self.row + 1 and square.col >= self.col - 1 and square.col <= self.col + 1 and not (square.row == self.row and square.col == self.col) and (square.state == 1 or square.state == 2):
-                square.toggle()
-
-    # Square pressed
-    def pressed(self):
-        # If power-up 3 active
-        if self.parent.can_flip:
-            self.toggle()
-            sound.play_effect(reds_away)
-            return
-        # State saved so power-up 2 can unlock
-        self.last_state = self.state
-
-        self.press = True
-        self.z_position = 0.3
-        self.run_action(pressed_action_1)
-        self.state = 0
-        self.color = color3
-
-        # Bonus star destroyed if star square pressed
-        if self.star:
-            self.star = False
-            self.parent.star_square = None
-            self.star_icon.run_action(
-                A.sequence(A.scale_to(0, 0.5), A.remove()))
-            sound.play_effect(star_away_sound)
-            self.parent.level_label.text = "Goodbye star!"
-        else:
-            sound.play_effect(tap_sound)
-
-    # Square toggles between black and white
-    def toggle(self):
-        # Ignore if square already pressed
-        if self.state == 0:
-            return
-        if self.rotation == 0:
-            self.run_action(toggle_action_1)
-        else:
-            self.run_action(toggle_action_2)
-        if self.state == 1:
-            self.state = 2
-            self.color = color2
-        elif self.state == 2:
-            self.state = 1
-            self.color = color1
-        if self.star:
-            self.go_star()
-
-    # Creates star icon if this square is the randomly selected star square
-    def go_star(self):
-        # Remove star icon first, if it exists
-        try:
-            self.star_icon.run_action(A.remove())
-        except:
-            pass
-        self.star = True
-
-        # Star icon depends on square color
-        if self.state == 1:
-            tex = Texture('typw:Star')
-        elif self.state == 2:
-            tex = Texture('typb:Star')
-        self.star_icon = SpriteNode(
-            texture=tex, position=self.position, size=(square_size - 5, square_size - 5))
-        self.star_icon.z_position = 0.6
-        self.parent.add_child(self.star_icon)
-
-
-# ---Class: Start / End Points
-class StartFinish (SpriteNode):
-    def __init__(self, row, type):
-        if type == "start":
-            self.anchor_point = (0.9375, 0.5)
-            self.position = (top_left[0] - square_size,
-                             top_left[1] - square_size * (row - 1))
-            self.color = color4
-        elif type == "finish":
-            self.anchor_point = (0.0625, 0.5)
-            self.position = (top_left[0] + square_size *
-                             cols, top_left[1] - square_size * (row - 1))
-            self.color = color2
-        self.size = (8 * square_size + 2, square_size)
-        self.z_position = 0.45
-        self.row = row
