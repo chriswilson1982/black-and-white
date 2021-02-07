@@ -15,6 +15,14 @@ Black & White is a colourful grid-based puzzle game created using [Pythonista](h
 
 ***
 
+### Installation
+
+Download or clone the repository to Pythonista's file system and run ```main.py``` using the Python 3 interpreter.
+
+[Pythonista Tools Installer](https://github.com/ywangd/pythonista-tools-installer) provides an easy way to do this. *Black & White* is listed in the library under *Games*.
+
+***
+
 ### Configuration
 
 The *config.ini* file contains modifiable configuration information. There are currently settings for two size classes in the *[LAYOUT_SMALL]* and *[LAYOUT_LARGE]* sections. These may need to be adjused for different screen sizes. You can also customise in-game messages and other aspects of the game.
