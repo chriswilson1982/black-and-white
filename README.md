@@ -25,7 +25,7 @@ Download or clone the repository to Pythonista's file system and run ```main.py`
 
 ### Configuration
 
-The *config.ini* file contains modifiable configuration information. There are currently settings for two size classes in the *[LAYOUT_SMALL]* and *[LAYOUT_LARGE]* sections. These may need to be adjused for different screen sizes. You can also customise in-game messages and other aspects of the game.
+The *config.ini* file contains modifiable configuration information. There are currently settings for two size classes in the `[LAYOUT_SMALL]` and `[LAYOUT_LARGE]` sections. These may need to be adjused for different screen sizes. You can also customise in-game messages and other aspects of the game.
 
 ***
 
