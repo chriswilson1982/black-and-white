@@ -4,15 +4,7 @@
 Black & White is a colourful grid-based puzzle game created using [Pythonista](http://omz-software.com/pythonista/) on iOS. This code is intended to be used within the Pythonista app.
 
 ***
-
-<p align="center">
-    <img src="https://www.chrisandkathy.co.uk/blackwhite/images/1.png" width="20%">
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <img src="https://www.chrisandkathy.co.uk/blackwhite/images/2.png" width="20%">
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <img src="https://www.chrisandkathy.co.uk/blackwhite/images/3.png" width="20%">
-</p>
-
+![Screenshot 1](https://user-images.githubusercontent.com/17131659/189769369-8d923b26-aebc-4f7f-b4ce-c0f2607cc8fa.png)
 ***
 
 ### Installation
