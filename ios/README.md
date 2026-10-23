@@ -12,6 +12,10 @@ Requires iOS 17. The game runs in portrait on iPhone and iPad.
 
 Run the unit tests with **Product → Test** (⌘U). They cover the grid rules, scoring and the solver (`BlackAndWhiteTests/BoardTests.swift`).
 
+## Tutorial
+
+On first launch, a short guided tutorial (`Views/TutorialView.swift`) runs before the first game. It uses a 4×4 practice grid where the player makes one real move and tests the path, then covers scoring, power-ups and the timer. The game's clock waits until the tutorial and the name prompt are done. It can be replayed from **Settings → Tutorial**.
+
 ## Every grid can be won
 
 When a round starts, the game checks that the grid can be won with normal taps alone (no power-ups) and re-rolls it if not. The check lives in `Board.solve()`:

@@ -57,6 +57,7 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    NavigationLink("Tutorial") { TutorialView(settings: draft) }
                     NavigationLink("How to play") { HelpView() }
                 }
             }

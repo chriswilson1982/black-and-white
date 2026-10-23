@@ -38,6 +38,14 @@ struct GameSettings: Codable, Equatable {
     var pathColor = RGBA(0, 1, 0)
     var soundEnabled = true
     var hasChosenName = false
+    var hasSeenTutorial = false
+
+    init() {}
+
+    enum CodingKeys: String, CodingKey {
+        case difficulty, username, whiteText, background, lockColor, pathColor
+        case soundEnabled, hasChosenName, hasSeenTutorial
+    }
 
     var textColor: UIColor { whiteText ? .white : .black }
 
@@ -62,5 +70,23 @@ struct GameSettings: Codable, Equatable {
         if let data = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(data, forKey: Self.storageKey)
         }
+    }
+}
+
+// Decoding tolerates missing keys, so settings saved by an older version still load
+// (any new setting takes its default value).
+extension GameSettings {
+    init(from decoder: Decoder) throws {
+        self.init()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        difficulty = try c.decodeIfPresent(Difficulty.self, forKey: .difficulty) ?? difficulty
+        username = try c.decodeIfPresent(String.self, forKey: .username) ?? username
+        whiteText = try c.decodeIfPresent(Bool.self, forKey: .whiteText) ?? whiteText
+        background = try c.decodeIfPresent(RGBA.self, forKey: .background) ?? background
+        lockColor = try c.decodeIfPresent(RGBA.self, forKey: .lockColor) ?? lockColor
+        pathColor = try c.decodeIfPresent(RGBA.self, forKey: .pathColor) ?? pathColor
+        soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? soundEnabled
+        hasChosenName = try c.decodeIfPresent(Bool.self, forKey: .hasChosenName) ?? hasChosenName
+        hasSeenTutorial = try c.decodeIfPresent(Bool.self, forKey: .hasSeenTutorial) ?? hasSeenTutorial
     }
 }

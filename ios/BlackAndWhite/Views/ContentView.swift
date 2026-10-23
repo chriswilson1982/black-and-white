@@ -50,6 +50,10 @@ struct ContentView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $coordinator.showingTutorial,
+                         onDismiss: { coordinator.tutorialDismissed() }) {
+            TutorialView(settings: coordinator.settings) { coordinator.finishTutorial() }
+        }
         .alert(coordinator.announcement?.title ?? "",
                isPresented: Binding(get: { coordinator.announcement != nil },
                                     set: { if !$0 { coordinator.announcement = nil } }),

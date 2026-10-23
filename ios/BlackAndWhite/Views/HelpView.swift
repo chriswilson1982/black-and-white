@@ -48,6 +48,9 @@ struct HelpView: View {
                     row("trophy.fill", "The high score table, with a separate table for each difficulty.")
                 }
 
+                Text("Want a hands-on refresher? Settings → Tutorial replays the guided tutorial.")
+                    .font(.callout)
+
                 Text("Black & White was created by Chris Wilson, originally in Python using Pythonista.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)

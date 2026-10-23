@@ -27,6 +27,8 @@ final class GameCoordinator: GameSceneDelegate {
     var nameDraft = ""
     /// True once the player is signed in to Game Center.
     var gameCenterReady = false
+    /// The first-launch tutorial is on screen.
+    var showingTutorial = false
 
     /// Settings chosen on the settings screen, applied once it has closed.
     @ObservationIgnored var pendingSettings: GameSettings?
@@ -35,6 +37,8 @@ final class GameCoordinator: GameSceneDelegate {
     @ObservationIgnored private var gameCenterAnswered = false
     @ObservationIgnored private var heldForSignIn = false
     @ObservationIgnored private var namePromptDone = false
+    /// Name prompt waiting for the tutorial to close, with the suggested name.
+    @ObservationIgnored private var deferredNameSuggestion: String??
 
     init() {
         settings = GameSettings.load()
@@ -49,6 +53,12 @@ final class GameCoordinator: GameSceneDelegate {
 
         // First launch: hold the clock and ask for a name once Game Center has signed in
         // (so the Game Center nickname can be suggested).
+        // First launch: the tutorial comes first; the clock waits until it closes.
+        if !settings.hasSeenTutorial {
+            newScene.setHeld(true)
+            showingTutorial = true
+        }
+
         if settings.hasChosenName {
             namePromptDone = true
         } else {
@@ -80,7 +90,7 @@ final class GameCoordinator: GameSceneDelegate {
             self.gameCenterReady = authenticated
             if self.heldForSignIn {
                 self.heldForSignIn = false
-                if self.activeSheet == nil && !self.confirmingRestart {
+                if self.activeSheet == nil && !self.confirmingRestart && !self.showingTutorial {
                     self.scene?.setHeld(false)
                 }
             }
@@ -91,11 +101,35 @@ final class GameCoordinator: GameSceneDelegate {
 
     private func askForNameIfNeeded(suggestion: String?) {
         guard !namePromptDone else { return }
+        if showingTutorial {
+            // Alerts can't appear over the tutorial; ask once it closes.
+            deferredNameSuggestion = .some(suggestion)
+            return
+        }
         namePromptDone = true
         nameDraft = suggestion ?? ""
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.askingForName = true
         }
+    }
+
+    func finishTutorial() {
+        showingTutorial = false
+    }
+
+    /// Runs after the tutorial has closed.
+    func tutorialDismissed() {
+        settings.hasSeenTutorial = true
+        settings.save()
+        if let suggestion = deferredNameSuggestion {
+            deferredNameSuggestion = nil
+            askForNameIfNeeded(suggestion: suggestion)
+        } else if namePromptDone && !askingForName && !heldForSignIn {
+            // Start a fresh round so the player gets the full clock.
+            scene?.startNewGame()
+            scene?.setHeld(false)
+        }
+        // Otherwise the clock stays held until the name prompt (still waiting on Game Center) is answered.
     }
 
     func showGameCenterLeaderboard(for difficulty: Difficulty) {
