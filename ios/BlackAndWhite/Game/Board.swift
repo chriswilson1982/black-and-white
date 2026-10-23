@@ -236,3 +236,152 @@ struct Board {
         )
     }
 }
+
+// MARK: - Solvability
+
+/// A way to win a board without power-ups: tap `taps` (in any order) and `path` will be white.
+struct Solution {
+    let path: [GridPoint]
+    let taps: [GridPoint]
+}
+
+enum SolveOutcome {
+    case solvable(Solution)
+    case unsolvable
+    /// The search ran out of budget before finding an answer either way.
+    case unknown
+}
+
+extension Board {
+    /// Board.random, re-rolled until the grid can be won without power-ups.
+    /// Falls back to the last grid tried if none passes within `attempts`.
+    static func randomSolvable(punishment: Bool, attempts: Int = 40) -> Board {
+        var board = random(punishment: punishment)
+        for _ in 1..<max(attempts, 1) {
+            if case .solvable = board.solve() { return board }
+            board = random(punishment: punishment)
+        }
+        return board
+    }
+
+    /// Checks whether the board can be won using only normal taps.
+    ///
+    /// Key fact: squares on the winning path are never tapped, so they are never locked.
+    /// Each one is flipped once by every tapped neighbour, whatever order the taps happen in.
+    /// So a path works if there is a set of taps (off the path) giving every path square an
+    /// odd number of tapped neighbours when it starts black, and an even number when it
+    /// starts white. That is a system of linear equations over GF(2), solved incrementally
+    /// while a depth-first search grows the path from the start square.
+    func solve(budget: Int = 10_000) -> SolveOutcome {
+        guard rows * cols <= 64 else { return .unknown }
+
+        func bit(_ p: GridPoint) -> UInt64 { UInt64(1) << UInt64(p.row * cols + p.col) }
+
+        var system = GF2System()
+        // Locked squares can't be tapped again.
+        for p in allPoints where isLocked(p) {
+            _ = system.add(bit(p), false)
+        }
+
+        var path: [GridPoint] = []
+        var onPath = Set<GridPoint>()
+        var steps = 0
+        var exhausted = false
+        let finish = finishPoint
+
+        /// Adds a square to the path: it can't be tapped, and it must end up white.
+        func addToPath(_ p: GridPoint) -> Bool {
+            guard !isLocked(p) else { return false }
+            var neighbours: UInt64 = 0
+            for n in surrounding(p) { neighbours |= bit(n) }
+            return system.add(bit(p), false) && system.add(neighbours, tone(at: p) == .black)
+        }
+
+        func nextSteps(from p: GridPoint) -> [GridPoint] {
+            let towardFinish = finish.row >= p.row ? 1 : -1
+            return [GridPoint(row: p.row, col: p.col + 1),
+                    GridPoint(row: p.row + towardFinish, col: p.col),
+                    GridPoint(row: p.row - towardFinish, col: p.col),
+                    GridPoint(row: p.row, col: p.col - 1)]
+                .filter { contains($0) && !onPath.contains($0) }
+        }
+
+        func search(_ p: GridPoint) -> Bool {
+            if p == finish { return true }
+            steps += 1
+            if steps > budget {
+                exhausted = true
+                return false
+            }
+            for n in nextSteps(from: p) {
+                let mark = system.count
+                if addToPath(n) {
+                    path.append(n)
+                    onPath.insert(n)
+                    if search(n) { return true }
+                    if exhausted { return false }
+                    path.removeLast()
+                    onPath.remove(n)
+                }
+                system.truncate(to: mark)
+            }
+            return false
+        }
+
+        let start = startPoint
+        guard addToPath(start) else { return .unsolvable }
+        path = [start]
+        onPath = [start]
+
+        if search(start) {
+            let tapBits = system.solution()
+            let taps = allPoints.filter { tapBits & bit($0) != 0 }
+            return .solvable(Solution(path: path, taps: taps))
+        }
+        return exhausted ? .unknown : .unsolvable
+    }
+}
+
+/// Linear equations over GF(2) (XOR), one bit per square, kept in echelon form so
+/// equations can be added and removed (last in, first out) during a search.
+private struct GF2System {
+    private var masks: [UInt64] = []
+    private var values: [Bool] = []
+    private var pivots: [UInt64] = []
+
+    var count: Int { masks.count }
+
+    /// Adds "XOR of the variables in `mask` == `value`". Returns false on a contradiction,
+    /// in which case nothing is added.
+    mutating func add(_ mask: UInt64, _ value: Bool) -> Bool {
+        var m = mask
+        var v = value
+        for i in masks.indices where m & pivots[i] != 0 {
+            m ^= masks[i]
+            v = v != values[i]
+        }
+        if m == 0 { return !v }
+        masks.append(m)
+        values.append(v)
+        pivots.append(m & (0 &- m))
+        return true
+    }
+
+    mutating func truncate(to n: Int) {
+        masks.removeLast(masks.count - n)
+        values.removeLast(values.count - n)
+        pivots.removeLast(pivots.count - n)
+    }
+
+    /// One solution, with free variables set to 0. Each row only contains its own pivot,
+    /// free variables and pivots of later rows, so solving from the last row back works.
+    func solution() -> UInt64 {
+        var x: UInt64 = 0
+        for i in masks.indices.reversed() {
+            let others = masks[i] & ~pivots[i]
+            let parity = (others & x).nonzeroBitCount % 2 == 1
+            if parity != values[i] { x |= pivots[i] }
+        }
+        return x
+    }
+}

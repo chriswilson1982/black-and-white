@@ -414,7 +414,7 @@ final class GameScene: SKScene {
         let punished = punishNext
         punishNext = false
 
-        board = Board.random(punishment: punished)
+        board = Board.randomSolvable(punishment: punished)
         phase = .dealing
         mode = .normal
         resultPath = []

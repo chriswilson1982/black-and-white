@@ -10,6 +10,43 @@ A native iOS version of the Pythonista game in the root of this repository, rebu
 
 Requires iOS 17. The game runs in portrait on iPhone and iPad.
 
+Run the unit tests with **Product → Test** (⌘U). They cover the grid rules, scoring and the solver (`BlackAndWhiteTests/BoardTests.swift`).
+
+## Every grid can be won
+
+When a round starts, the game checks that the grid can be won with normal taps alone (no power-ups) and re-rolls it if not. The check lives in `Board.solve()`:
+
+- Squares on the winning path are never tapped, so each one is flipped once by every tapped neighbour, in any order.
+- That turns "is there a path?" into a small set of XOR (GF(2)) equations. These are solved as a depth-first search builds the path out from the start square.
+- The search has a step budget. A grid that runs out of budget counts as unproven and is re-rolled too (about 3% of the largest grids). That keeps the check to a few milliseconds.
+
+## Game Center
+
+There is one Game Center leaderboard per difficulty. Scores are submitted when a game ends with a score above zero, the same rule as the local high score table. The high scores screen has a **Game Center leaderboard** button once the player is signed in. On first launch, the player's Game Center nickname is suggested as their name.
+
+Leaderboard IDs (set in `Support/GameCenter.swift`):
+
+| Difficulty | Leaderboard ID |
+| --- | --- |
+| Easy | `com.chriswilson.blackandwhite.easy` |
+| Regular | `com.chriswilson.blackandwhite.regular` |
+| Hard | `com.chriswilson.blackandwhite.hard` |
+
+### Setup in App Store Connect / developer account
+
+1. **App ID:** in *Certificates, Identifiers & Profiles*, make sure the app's identifier (`com.chriswilson.blackandwhite`, or your own) has **Game Center** enabled. With automatic signing, Xcode usually does this when it sees the entitlement in `BlackAndWhite.entitlements`. If you change the bundle ID, change it in the build settings too.
+2. **App record:** create the app in App Store Connect with that bundle ID.
+3. **Enable Game Center:** in the app's *Services* tab (older layouts: the version page's *Game Center* section), turn on Game Center.
+4. **Create three leaderboards** under *Services → Game Center → Leaderboards*. For each one:
+   - Type **Classic**, Leaderboard ID exactly as in the table above.
+   - Score format **Integer**, sort **High to Low**, submission type **Best Score**.
+   - Optional score range: minimum 1.
+   - Add at least one localization (e.g. English: "Easy", "Regular", "Hard"; format "1 point / 2 points"), plus an optional 512×512 image.
+5. **Attach to the version:** in the app version's *Game Center* section, add all three leaderboards so they ship with that version. Leaderboards that are live can't be deleted, and their IDs can't be reused.
+6. **Testing:** leaderboards work in development builds and on TestFlight before release. Sign in to Game Center on the test device (Settings → Game Center). In the Simulator you can sign in with a sandbox account, or Game Center simply stays off.
+
+If you use different leaderboard IDs, update `GameCenter.leaderboardID(for:)` to match.
+
 ## How it maps to the Python version
 
 | Python (Pythonista) | Swift |
@@ -19,7 +56,7 @@ Requires iOS 17. The game runs in portrait on iPhone and iPad.
 | `square.py`, `powerup.py`, timer drawing | `Game/Nodes.swift` |
 | `config.ini` messages | `Game/Messages.swift` |
 | `config.ini` settings + `configuration.py` | `Support/GameSettings.swift` (saved in UserDefaults) |
-| `database.py` (SQLite) | `Support/HighScoreStore.swift` (JSON file) |
+| `database.py` (SQLite) | `Support/HighScoreStore.swift` (JSON file) + `Support/GameCenter.swift` |
 | `ui/settings.pyui` | `Views/SettingsView.swift` |
 | `ui/highscores.pyui` | `Views/HighScoresView.swift` |
 | `html/info.html` | `Views/HelpView.swift` |

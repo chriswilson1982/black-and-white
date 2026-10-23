@@ -6,7 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		B4A1E0000000000000000017 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B4A1E0000000000000000009 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B4A1E0000000000000000006;
+			remoteInfo = BlackAndWhite;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		B4A1E0000000000000000010 /* BlackAndWhiteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BlackAndWhiteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B4A1E000000000000000001B /* BlackAndWhite.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BlackAndWhite.entitlements; sourceTree = "<group>"; };
 		B4A1E0000000000000000001 /* BlackAndWhite.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlackAndWhite.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -14,6 +26,11 @@
 		B4A1E0000000000000000002 /* BlackAndWhite */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = BlackAndWhite;
+			sourceTree = "<group>";
+		};
+		B4A1E0000000000000000011 /* BlackAndWhiteTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BlackAndWhiteTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -26,13 +43,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B4A1E0000000000000000012 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		B4A1E0000000000000000004 = {
 			isa = PBXGroup;
 			children = (
+				B4A1E000000000000000001B /* BlackAndWhite.entitlements */,
 				B4A1E0000000000000000002 /* BlackAndWhite */,
+				B4A1E0000000000000000011 /* BlackAndWhiteTests */,
 				B4A1E0000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +67,7 @@
 			isa = PBXGroup;
 			children = (
 				B4A1E0000000000000000001 /* BlackAndWhite.app */,
+				B4A1E0000000000000000010 /* BlackAndWhiteTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +97,29 @@
 			productReference = B4A1E0000000000000000001 /* BlackAndWhite.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B4A1E0000000000000000015 /* BlackAndWhiteTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B4A1E0000000000000000018 /* Build configuration list for PBXNativeTarget "BlackAndWhiteTests" */;
+			buildPhases = (
+				B4A1E0000000000000000013 /* Sources */,
+				B4A1E0000000000000000012 /* Frameworks */,
+				B4A1E0000000000000000014 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B4A1E0000000000000000016 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B4A1E0000000000000000011 /* BlackAndWhiteTests */,
+			);
+			name = BlackAndWhiteTests;
+			packageProductDependencies = (
+			);
+			productName = BlackAndWhiteTests;
+			productReference = B4A1E0000000000000000010 /* BlackAndWhiteTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +132,10 @@
 				TargetAttributes = {
 					B4A1E0000000000000000006 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					B4A1E0000000000000000015 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = B4A1E0000000000000000006;
 					};
 				};
 			};
@@ -100,12 +154,20 @@
 			projectRoot = "";
 			targets = (
 				B4A1E0000000000000000006 /* BlackAndWhite */,
+				B4A1E0000000000000000015 /* BlackAndWhiteTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		B4A1E0000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4A1E0000000000000000014 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +184,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B4A1E0000000000000000013 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B4A1E0000000000000000016 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B4A1E0000000000000000006 /* BlackAndWhite */;
+			targetProxy = B4A1E0000000000000000017 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		B4A1E000000000000000000C /* Debug */ = {
@@ -190,6 +267,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BlackAndWhite.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -220,6 +298,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = BlackAndWhite.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
@@ -246,6 +325,40 @@
 			};
 			name = Release;
 		};
+		B4A1E0000000000000000019 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chriswilson.blackandwhite.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BlackAndWhite.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BlackAndWhite";
+			};
+			name = Debug;
+		};
+		B4A1E000000000000000001A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chriswilson.blackandwhite.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/BlackAndWhite.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/BlackAndWhite";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -263,6 +376,15 @@
 			buildConfigurations = (
 				B4A1E000000000000000000C /* Debug */,
 				B4A1E000000000000000000D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B4A1E0000000000000000018 /* Build configuration list for PBXNativeTarget "BlackAndWhiteTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B4A1E0000000000000000019 /* Debug */,
+				B4A1E000000000000000001A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

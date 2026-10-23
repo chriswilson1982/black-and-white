@@ -4,10 +4,20 @@ struct HighScoresView: View {
     let store: HighScoreStore
     @State private var difficulty: Difficulty
     @Environment(\.dismiss) private var dismiss
+    private let gameCenterAvailable: Bool
+    private let onShowGameCenter: (Difficulty) -> Void
 
-    init(store: HighScoreStore, difficulty: Difficulty) {
+    init(store: HighScoreStore, difficulty: Difficulty, gameCenterAvailable: Bool = false,
+         onShowGameCenter: @escaping (Difficulty) -> Void = { _ in }) {
         self.store = store
         _difficulty = State(initialValue: difficulty)
+        self.gameCenterAvailable = gameCenterAvailable
+        self.onShowGameCenter = onShowGameCenter
+    }
+
+    private var gameCenterFooter: String {
+        "Compare your best \(difficulty.name.lowercased()) score with players everywhere. "
+            + "The table below shows scores on this device."
     }
 
     var body: some View {
@@ -23,6 +33,18 @@ struct HighScoresView: View {
                     .pickerStyle(.segmented)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
+                }
+
+                if gameCenterAvailable {
+                    Section {
+                        Button {
+                            onShowGameCenter(difficulty)
+                        } label: {
+                            Label("Game Center leaderboard", systemImage: "gamecontroller.fill")
+                        }
+                    } footer: {
+                        Text(gameCenterFooter)
+                    }
                 }
 
                 if rows.isEmpty {

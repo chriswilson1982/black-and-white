@@ -25,10 +25,16 @@ final class GameCoordinator: GameSceneDelegate {
     var announcement: Announcement?
     var askingForName = false
     var nameDraft = ""
+    /// True once the player is signed in to Game Center.
+    var gameCenterReady = false
 
     /// Settings chosen on the settings screen, applied once it has closed.
     @ObservationIgnored var pendingSettings: GameSettings?
     @ObservationIgnored private var presentedSheet: Sheet?
+    @ObservationIgnored private var gameCenterStarted = false
+    @ObservationIgnored private var gameCenterAnswered = false
+    @ObservationIgnored private var heldForSignIn = false
+    @ObservationIgnored private var namePromptDone = false
 
     init() {
         settings = GameSettings.load()
@@ -41,13 +47,59 @@ final class GameCoordinator: GameSceneDelegate {
         newScene.gameDelegate = self
         scene = newScene
 
-        // First launch: ask for a name for the leaderboard before the clock starts.
-        if !settings.hasChosenName {
+        // First launch: hold the clock and ask for a name once Game Center has signed in
+        // (so the Game Center nickname can be suggested).
+        if settings.hasChosenName {
+            namePromptDone = true
+        } else {
             newScene.setHeld(true)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-                self?.askingForName = true
+            // In case Game Center never answers.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+                guard let self = self, !self.gameCenterAnswered else { return }
+                self.askForNameIfNeeded(suggestion: nil)
             }
         }
+        startGameCenter()
+    }
+
+    private func startGameCenter() {
+        guard !gameCenterStarted else { return }
+        gameCenterStarted = true
+        let gameCenter = GameCenter.shared
+        gameCenter.onPresentingSignIn = { [weak self] in
+            guard let self = self else { return }
+            self.gameCenterAnswered = true
+            if self.namePromptDone {
+                self.heldForSignIn = true
+                self.scene?.setHeld(true)
+            }
+        }
+        gameCenter.onAuthenticationFinished = { [weak self] authenticated, alias in
+            guard let self = self else { return }
+            self.gameCenterAnswered = true
+            self.gameCenterReady = authenticated
+            if self.heldForSignIn {
+                self.heldForSignIn = false
+                if self.activeSheet == nil && !self.confirmingRestart {
+                    self.scene?.setHeld(false)
+                }
+            }
+            self.askForNameIfNeeded(suggestion: alias)
+        }
+        gameCenter.authenticate()
+    }
+
+    private func askForNameIfNeeded(suggestion: String?) {
+        guard !namePromptDone else { return }
+        namePromptDone = true
+        nameDraft = suggestion ?? ""
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.askingForName = true
+        }
+    }
+
+    func showGameCenterLeaderboard(for difficulty: Difficulty) {
+        GameCenter.shared.showLeaderboard(for: difficulty)
     }
 
     func saveName() {
@@ -104,6 +156,7 @@ final class GameCoordinator: GameSceneDelegate {
     }
 
     func gameScene(_ scene: GameScene, didEndGameWithScore score: Int) {
+        GameCenter.shared.submit(score: score, difficulty: settings.difficulty)
         let name = settings.username
         guard let result = scores.record(name: name, score: score, difficulty: settings.difficulty) else { return }
         let announcement: Announcement

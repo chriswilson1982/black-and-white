@@ -44,7 +44,10 @@ struct ContentView: View {
             case .settings:
                 SettingsView(settings: coordinator.settings) { coordinator.pendingSettings = $0 }
             case .highScores:
-                HighScoresView(store: coordinator.scores, difficulty: coordinator.settings.difficulty)
+                HighScoresView(store: coordinator.scores, difficulty: coordinator.settings.difficulty,
+                               gameCenterAvailable: coordinator.gameCenterReady) { difficulty in
+                    coordinator.showGameCenterLeaderboard(for: difficulty)
+                }
             }
         }
         .alert(coordinator.announcement?.title ?? "",
