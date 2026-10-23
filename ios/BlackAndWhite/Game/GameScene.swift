@@ -85,7 +85,14 @@ final class GameScene: SKScene {
     private var isHeld = false
 
     private var message = "" {
-        didSet { messageLabel?.text = message }
+        didSet {
+            guard let label = messageLabel, message != oldValue else { return }
+            label.text = message
+            label.removeAction(forKey: "pop")
+            label.setScale(1)
+            label.run(.sequence([.scale(to: 1.1, duration: 0.07).timing(.easeOut),
+                                 .scale(to: 1, duration: 0.12).timing(.easeIn)]), withKey: "pop")
+        }
     }
 
     private var settingsAvailable: Bool {
@@ -496,6 +503,7 @@ final class GameScene: SKScene {
         for p in board.allPoints {
             let node = SquareNode(point: p, side: s)
             node.position = cellPosition(p)
+            node.home = node.position
             addChild(node)
             squares[p] = node
             styleSquare(p)
@@ -710,8 +718,8 @@ final class GameScene: SKScene {
                 board.unlock(p)
                 powerupCounts[PowerupNode.Kind.unlock.rawValue] -= 1
                 SoundEngine.shared.play(.unlock)
-                squares[p]?.spin()
-                styleSquare(p)
+                flipSquare(p)
+                ripple(at: cellPosition(p), color: .white)
                 setMode(.normal)
                 message = levelText
                 refreshStar()
@@ -722,13 +730,16 @@ final class GameScene: SKScene {
             // Tapping an unlocked square cancels the power-up and plays a normal move.
             setMode(.normal)
         case .flipSingle:
-            guard !board.isLocked(p) else { return }
+            guard !board.isLocked(p) else {
+                rejectTap(p)
+                return
+            }
             board.toggle(p)
             powerupCounts[PowerupNode.Kind.flipOne.rawValue] -= 1
             setMode(.normal)
             SoundEngine.shared.play(.unlock)
-            squares[p]?.spin()
-            styleSquare(p)
+            flipSquare(p)
+            ripple(at: cellPosition(p), color: pathColor)
             sparkleSquare(p)
             message = levelText
             refreshStar()
@@ -739,15 +750,19 @@ final class GameScene: SKScene {
             break
         }
 
-        guard !board.isLocked(p) else { return }
+        guard !board.isLocked(p) else {
+            rejectTap(p)
+            return
+        }
         let hadStar = board.star == p
         let flipped = board.lock(p)
         tapHaptic.impactOccurred()
 
         if let node = squares[p] {
-            node.spin()
-            styleSquare(p)
+            node.zPosition = Z.lockedSquare
+            node.stamp(color: lockColor)
         }
+        ripple(at: cellPosition(p), color: lockColor)
         if hadStar, let star = starNode {
             starNode = nil
             star.run(.sequence([.scale(to: 0, duration: 0.5), .removeFromParent()]))
@@ -756,9 +771,10 @@ final class GameScene: SKScene {
         } else {
             SoundEngine.shared.play(.tap)
         }
+        // Neighbours flip in a quick ripple: edges first, then corners.
         for n in flipped {
-            squares[n]?.spin()
-            styleSquare(n)
+            let isCorner = n.row != p.row && n.col != p.col
+            flipSquare(n, delay: isCorner ? 0.07 : 0.03, from: p)
             sparkleSquare(n)
         }
         refreshStar()
@@ -774,9 +790,9 @@ final class GameScene: SKScene {
             setMode(.normal)
             powerupCounts[kind.rawValue] -= 1
             node.run(pressAction(0.9))
+            // A wave sweeping across from the left.
             for p in board.flipAll() {
-                squares[p]?.spin()
-                styleSquare(p)
+                flipSquare(p, delay: Double(p.col) * 0.04 + Double(p.row) * 0.015)
             }
             message = "Flip all squares"
             SoundEngine.shared.play(.flip)
@@ -870,6 +886,12 @@ final class GameScene: SKScene {
         applyChromeForPhase()
         SoundEngine.shared.play(.button)
 
+        // Finish any flips still running so they can't overwrite the path colours.
+        for (p, node) in squares {
+            node.settle()
+            styleSquare(p)
+        }
+
         let result = board.evaluate()
         resultPath = result.path
         resultWon = result.won
@@ -878,6 +900,7 @@ final class GameScene: SKScene {
         let step = 0.03
         for (i, layer) in result.pathLayers.enumerated() {
             for p in layer {
+                squares[p]?.pop(after: Double(i) * step)
                 squares[p]?.run(.sequence([
                     .wait(forDuration: Double(i) * step),
                     .run { [weak self] in
@@ -1104,25 +1127,58 @@ final class GameScene: SKScene {
 
     // MARK: Refreshing visuals from state
 
+    /// How a square should look for the current state.
+    private func appearance(_ p: GridPoint) -> (color: UIColor, alpha: CGFloat, z: CGFloat) {
+        if resultPath.contains(p) {
+            return (resultWon ? pathColor : lockColor, 1, Z.square)
+        } else if board.isLocked(p) {
+            return (lockColor, 1, Z.lockedSquare)
+        } else if board.tone(at: p) == .black {
+            return (.black, 1, Z.square)
+        } else {
+            return (.white, 0.8, Z.square)
+        }
+    }
+
     private func styleSquare(_ p: GridPoint) {
         guard let node = squares[p] else { return }
-        if resultPath.contains(p) {
-            node.color = resultWon ? pathColor : lockColor
-            node.alpha = 1
-            node.zPosition = Z.square
-        } else if board.isLocked(p) {
-            node.color = lockColor
-            node.alpha = 1
-            node.zPosition = Z.lockedSquare
-        } else if board.tone(at: p) == .black {
-            node.color = .black
-            node.alpha = 1
-            node.zPosition = Z.square
-        } else {
-            node.color = .white
-            node.alpha = 0.8
-            node.zPosition = Z.square
-        }
+        let look = appearance(p)
+        node.color = look.color
+        node.alpha = look.alpha
+        node.zPosition = look.z
+    }
+
+    /// Animates a square to its current colour with a card flip. When `origin` is given,
+    /// squares directly above or below it flip top-to-bottom, others side-to-side.
+    private func flipSquare(_ p: GridPoint, delay: TimeInterval = 0, from origin: GridPoint? = nil) {
+        guard let node = squares[p] else { return }
+        let look = appearance(p)
+        node.zPosition = look.z + 0.2
+        let axis: SquareNode.FlipAxis = (origin?.col == p.col) ? .horizontal : .vertical
+        node.flip(to: look.color, alpha: look.alpha, delay: delay, axis: axis)
+    }
+
+    /// An outline that grows out of a square and fades.
+    private func ripple(at point: CGPoint, color: UIColor) {
+        let s = layout.s
+        let ring = SKShapeNode(rectOf: CGSize(width: s, height: s), cornerRadius: s * 0.12)
+        ring.strokeColor = color
+        ring.fillColor = .clear
+        ring.lineWidth = 2
+        ring.position = point
+        ring.zPosition = Z.cross
+        addChild(ring)
+        ring.run(.sequence([
+            .group([.scale(to: 2.8, duration: 0.45).timing(.easeOut),
+                    .fadeOut(withDuration: 0.45)]),
+            .removeFromParent(),
+        ]))
+    }
+
+    /// A tap that can't do anything: the square wobbles.
+    private func rejectTap(_ p: GridPoint) {
+        squares[p]?.shake()
+        UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 0.6)
     }
 
     /// Star icon contrasts with the square under it.
@@ -1246,7 +1302,7 @@ final class GameScene: SKScene {
 
     private func sparkleSquare(_ p: GridPoint) {
         guard let node = squares[p] else { return }
-        sparkle(color: node.color, at: node.position, texture: Art.roundedSquare,
+        sparkle(color: appearance(p).color, at: node.home, texture: Art.roundedSquare,
                 side: layout.s * 0.5, spread: layout.s, count: 2)
     }
 

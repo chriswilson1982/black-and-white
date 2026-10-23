@@ -4,7 +4,15 @@ import UIKit
 /// A square on the game grid.
 final class SquareNode: SKSpriteNode {
     let point: GridPoint
-    private var spun = false
+    /// Resting position on the grid, used to settle after a shake.
+    var home: CGPoint = .zero
+
+    enum FlipAxis {
+        /// Squashes sideways, like a card turning left to right.
+        case vertical
+        /// Squashes top to bottom.
+        case horizontal
+    }
 
     init(point: GridPoint, side: CGFloat) {
         self.point = point
@@ -14,15 +22,64 @@ final class SquareNode: SKSpriteNode {
     @available(*, unavailable)
     required init?(coder aDecoder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    /// Half turn with a squash, played whenever the square changes colour.
-    func spin() {
-        spun.toggle()
-        removeAction(forKey: "spin")
+    /// Card flip: squash flat, swap colour at the midpoint, then open out again.
+    func flip(to newColor: UIColor, alpha newAlpha: CGFloat, delay: TimeInterval = 0, axis: FlipAxis = .vertical) {
+        removeAction(forKey: "flip")
+        let half = 0.09
+        let squash: SKAction
+        let open: SKAction
+        switch axis {
+        case .vertical:
+            squash = SKAction.scaleX(to: 0.04, duration: half).timing(.easeIn)
+            open = SKAction.scaleX(to: 1, duration: half).timing(.easeOut)
+        case .horizontal:
+            squash = SKAction.scaleY(to: 0.04, duration: half).timing(.easeIn)
+            open = SKAction.scaleY(to: 1, duration: half).timing(.easeOut)
+        }
+        let swap = SKAction.run { [weak self] in
+            self?.color = newColor
+            self?.alpha = newAlpha
+        }
+        run(.sequence([.wait(forDuration: delay), squash, swap, open, .scale(to: 1, duration: 0)]),
+            withKey: "flip")
+    }
+
+    /// The tapped square: changes colour at once and "stamps" down then springs back.
+    func stamp(color newColor: UIColor) {
+        removeAction(forKey: "flip")
+        color = newColor
+        alpha = 1
         run(.sequence([
-            .group([.scale(to: 0.7, duration: 0.1),
-                    .rotate(toAngle: spun ? .pi : 0, duration: 0.3, shortestUnitArc: false)]),
-            .scale(to: 1, duration: 0.1),
-        ]), withKey: "spin")
+            .scale(to: 0.78, duration: 0.06).timing(.easeOut),
+            .scale(to: 1.12, duration: 0.1).timing(.easeOut),
+            .scale(to: 1, duration: 0.14).timing(.easeInEaseOut),
+        ]), withKey: "flip")
+    }
+
+    /// Finishes any flip in progress immediately.
+    func settle() {
+        removeAction(forKey: "flip")
+        setScale(1)
+    }
+
+    /// Quick side-to-side wobble for a tap that does nothing.
+    func shake() {
+        removeAction(forKey: "shake")
+        position = home
+        let d = max(3, size.width * 0.08)
+        run(.sequence([
+            .moveBy(x: d, y: 0, duration: 0.04),
+            .moveBy(x: -2 * d, y: 0, duration: 0.08),
+            .moveBy(x: d * 1.4, y: 0, duration: 0.06),
+            .move(to: home, duration: 0.05),
+        ]), withKey: "shake")
+    }
+
+    /// Little bounce as the path floods through.
+    func pop(after delay: TimeInterval) {
+        run(.sequence([.wait(forDuration: delay),
+                       .scale(to: 1.15, duration: 0.08).timing(.easeOut),
+                       .scale(to: 1, duration: 0.12).timing(.easeIn)]), withKey: "pop")
     }
 
     /// Gentle throb used while the "flip a single square" power-up is armed.
@@ -68,6 +125,7 @@ final class PowerupNode: SKNode {
     private let maxRing: SKShapeNode
     private let icon = SKSpriteNode()
     private let label = SKLabelNode(fontNamed: "HelveticaNeue")
+    private var lastCount: Int?
 
     init(kind: Kind, size: CGSize, maxColor: UIColor) {
         self.kind = kind
@@ -119,6 +177,14 @@ final class PowerupNode: SKNode {
         icon.size = art.size
         label.fontColor = foreground
         label.text = "\(count)"
+        if let last = lastCount, last != count {
+            // Count changed: the number pops (up for gains, down for spending).
+            label.removeAction(forKey: "pop")
+            label.setScale(1)
+            label.run(.sequence([.scale(to: count > last ? 1.5 : 0.6, duration: 0.08),
+                                 .scale(to: 1, duration: 0.15).timing(.easeOut)]), withKey: "pop")
+        }
+        lastCount = count
         maxRing.isHidden = count < Board.maxPowerups
         body.alpha = count == 0 ? 0.5 : 1
         icon.alpha = count == 0 ? 0.4 : 1

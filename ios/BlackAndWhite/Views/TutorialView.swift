@@ -191,7 +191,7 @@ struct TutorialView: View {
             .fill(color)
             .overlay(Rectangle().stroke(Color.gray.opacity(0.25), lineWidth: 0.5))
             .frame(width: side, height: side)
-            .rotationEffect(.degrees(spins[p, default: 0]))
+            .rotation3DEffect(.degrees(spins[p, default: 0]), axis: (x: 0, y: 1, z: 0))
             .overlay {
                 if isTarget {
                     RoundedRectangle(cornerRadius: 6)
