@@ -9,6 +9,7 @@ struct TutorialView: View {
     var onFinish: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private enum Step: Int, CaseIterable {
         case goal, tap, commit, scored, powerups, ready
@@ -80,6 +81,10 @@ struct TutorialView: View {
         .background(backgroundColor.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
+            guard !reduceMotion else {
+                pulse = true
+                return
+            }
             withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
                 pulse = true
             }
@@ -346,8 +351,10 @@ struct TutorialView: View {
         SoundEngine.shared.play(.tap)
         withAnimation(.easeInOut(duration: 0.35)) {
             hint = nil
-            spins[p, default: 0] += 180
-            for n in flipped { spins[n, default: 0] += 180 }
+            if !reduceMotion {
+                spins[p, default: 0] += 180
+                for n in flipped { spins[n, default: 0] += 180 }
+            }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
             withAnimation(.easeInOut(duration: 0.25)) { step = .commit }

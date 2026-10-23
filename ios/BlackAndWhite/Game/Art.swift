@@ -53,7 +53,23 @@ enum Art {
     }
 }
 
+/// Reduce Motion (Settings → Accessibility → Motion). When on, the game swaps movement for fades.
+enum Motion {
+    static var reduced: Bool { UIAccessibility.isReduceMotionEnabled }
+}
+
 extension UIColor {
+    /// Mixes towards `other` by `amount` (0 = this colour, 1 = other).
+    func blended(with other: UIColor, amount: CGFloat) -> UIColor {
+        var r1: CGFloat = 0, g1: CGFloat = 0, b1: CGFloat = 0, a1: CGFloat = 0
+        var r2: CGFloat = 0, g2: CGFloat = 0, b2: CGFloat = 0, a2: CGFloat = 0
+        getRed(&r1, &g1, &b1, &a1)
+        other.getRed(&r2, &g2, &b2, &a2)
+        let t = min(max(amount, 0), 1)
+        return UIColor(red: r1 + (r2 - r1) * t, green: g1 + (g2 - g1) * t,
+                       blue: b1 + (b2 - b1) * t, alpha: a1 + (a2 - a1) * t)
+    }
+
     var cacheKey: String {
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
         getRed(&r, &g, &b, &a)

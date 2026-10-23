@@ -20,6 +20,8 @@ private enum Z {
     static let cross: CGFloat = 6.5
     static let star: CGFloat = 7
     static let counter: CGFloat = 7.5
+    static let preview: CGFloat = 7.8
+    static let urgency: CGFloat = 7.9
     static let messageBar: CGFloat = 8
     static let message: CGFloat = 9
     static let controls: CGFloat = 10
@@ -75,6 +77,14 @@ final class GameScene: SKScene {
     private var punishNext = false
     private var resultPath: Set<GridPoint> = []
     private var resultWon = false
+    /// White squares currently connected to the start square (tinted while playing).
+    private var livePath: Set<GridPoint> = []
+    private var pathReady: Bool { livePath.contains(board.finishPoint) }
+
+    /// Square under the player's finger, previewed until they lift it.
+    private var pressedCell: GridPoint?
+    private var trackingGrid = false
+    private var previewNodes: [SKNode] = []
 
     private var elapsed: TimeInterval = 0
     private var lastUpdate: TimeInterval?
@@ -88,6 +98,7 @@ final class GameScene: SKScene {
         didSet {
             guard let label = messageLabel, message != oldValue else { return }
             label.text = message
+            guard !Motion.reduced else { return }
             label.removeAction(forKey: "pop")
             label.setScale(1)
             label.run(.sequence([.scale(to: 1.1, duration: 0.07).timing(.easeOut),
@@ -152,10 +163,13 @@ final class GameScene: SKScene {
     private var startBackdrop: SKSpriteNode!
     private var finishBar: SKSpriteNode!
     private var finishBackdrop: SKSpriteNode!
+    /// Red glow around the screen edges during the final countdown.
+    private var urgencyFrame: SKShapeNode!
 
     private let motion = CMMotionManager()
     private let tapHaptic = UIImpactFeedbackGenerator(style: .light)
     private let resultHaptic = UINotificationFeedbackGenerator()
+    private let selectionHaptic = UISelectionFeedbackGenerator()
 
     // MARK: Colours
 
@@ -254,6 +268,9 @@ final class GameScene: SKScene {
         squares = [:]
         gridDecor = []
         crosses = []
+        previewNodes = []
+        pressedCell = nil
+        trackingGrid = false
         starNode = nil
         scorePopup = nil
 
@@ -371,6 +388,14 @@ final class GameScene: SKScene {
         finishBar.zPosition = Z.bar
         addChild(finishBar)
 
+        urgencyFrame = SKShapeNode(rect: CGRect(origin: .zero, size: size))
+        urgencyFrame.strokeColor = lockColor
+        urgencyFrame.fillColor = .clear
+        urgencyFrame.lineWidth = 0.6 * s
+        urgencyFrame.alpha = 0
+        urgencyFrame.zPosition = Z.urgency
+        addChild(urgencyFrame)
+
         isBuilt = true
         refreshPowerups()
         applyChromeForPhase()
@@ -426,6 +451,8 @@ final class GameScene: SKScene {
         mode = .normal
         resultPath = []
         resultWon = false
+        livePath = Set(board.pathLayers().joined())
+        clearPreview()
         elapsed = 0
         warned = false
         lowTime = false
@@ -441,12 +468,17 @@ final class GameScene: SKScene {
             bg.node.removeAllActions()
             bg.node.color = randomPaletteColor()
             let target = randomScreenPoint()
-            bg.node.run(.move(to: target, duration: Double.random(in: 0.1...1)))
+            if Motion.reduced {
+                bg.node.position = target
+            } else {
+                bg.node.run(.move(to: target, duration: Double.random(in: 0.1...1)))
+            }
         }
 
         renderBoard(animated: true)
         refreshPowerups()
         applyChromeForPhase()
+        showLevelCard(subtitle: punished ? message : nil)
 
         run(.sequence([.wait(forDuration: 1.1), .run { [weak self] in self?.beginPlay() }]), withKey: "deal")
         SoundEngine.shared.play(.newGame)
@@ -511,6 +543,11 @@ final class GameScene: SKScene {
             guard animated else { continue }
             let target = node.position
             let targetAlpha = node.alpha
+            if Motion.reduced {
+                node.alpha = 0
+                node.run(.fadeAlpha(to: targetAlpha, duration: 0.4), withKey: "deal")
+                continue
+            }
             node.position = randomScreenPoint()
             node.setScale(0)
             node.alpha = 0
@@ -608,11 +645,13 @@ final class GameScene: SKScene {
                 lastTick = second
                 message = "\(second)"
                 SoundEngine.shared.play(.tick)
+                flashUrgency()
             }
         }
     }
 
     private func driftBackground(_ dt: TimeInterval) {
+        guard !Motion.reduced else { return }
         var gravity = CGVector(dx: 0, dy: -0.1)
         if let a = motion.accelerometerData?.acceleration {
             gravity = CGVector(dx: a.x, dy: a.y)
@@ -650,8 +689,90 @@ final class GameScene: SKScene {
         } else if hit(settingsButton, size: CGSize(width: layout.s, height: layout.s), p) {
             settingsTapped()
         } else if phase == .playing, let tapped = cell(at: p) {
-            squareTapped(tapped)
+            // Grid squares act when the finger lifts; while it's down, show what will flip.
+            trackingGrid = true
+            pressedCell = tapped
+            showPreview(tapped)
+            selectionHaptic.prepare()
         }
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard trackingGrid, let touch = touches.first else { return }
+        let current = phase == .playing ? cell(at: touch.location(in: self)) : nil
+        guard current != pressedCell else { return }
+        pressedCell = current
+        showPreview(current)
+        if current != nil { selectionHaptic.selectionChanged() }
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard trackingGrid else { return }
+        let target = pressedCell
+        endGridTracking()
+        if let target = target, phase == .playing, !isHeld {
+            squareTapped(target)
+        }
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        endGridTracking()
+    }
+
+    private func endGridTracking() {
+        trackingGrid = false
+        pressedCell = nil
+        clearPreview()
+    }
+
+    /// Previews a move: the pressed square is outlined and each square that would flip
+    /// shows a small chip of the colour it will become.
+    private func showPreview(_ p: GridPoint?) {
+        clearPreview()
+        guard let p = p, phase == .playing, let node = squares[p] else { return }
+        let s = layout.s
+
+        var outlineColor = lockColor
+        var targets: [GridPoint] = []
+        switch mode {
+        case .unlock where board.isLocked(p):
+            outlineColor = .white
+        case .flipSingle:
+            guard !board.isLocked(p) else { return }
+            outlineColor = pathColor
+            targets = [p]
+        default:
+            guard !board.isLocked(p) else { return }
+            targets = board.surrounding(p).filter { !board.isLocked($0) }
+        }
+
+        let outline = SKShapeNode(rectOf: CGSize(width: s - 4, height: s - 4), cornerRadius: s * 0.1)
+        outline.strokeColor = outlineColor
+        outline.lineWidth = 3
+        outline.fillColor = .clear
+        outline.position = node.home
+        outline.zPosition = Z.preview
+        addChild(outline)
+        previewNodes.append(outline)
+
+        for t in targets {
+            let chip = SKSpriteNode(texture: Art.roundedSquare, size: CGSize(width: 0.42 * s, height: 0.42 * s))
+            chip.colorBlendFactor = 1
+            chip.color = board.tone(at: t) == .black ? .white : .black
+            chip.position = cellPosition(t)
+            chip.zPosition = Z.preview
+            addChild(chip)
+            previewNodes.append(chip)
+            if !Motion.reduced {
+                chip.setScale(0.2)
+                chip.run(.scale(to: 1, duration: 0.1).timing(.easeOut))
+            }
+        }
+    }
+
+    private func clearPreview() {
+        previewNodes.forEach { $0.removeFromParent() }
+        previewNodes = []
     }
 
     private func hit(_ node: SKNode, size: CGSize, _ p: CGPoint, slop: CGFloat = 8) -> Bool {
@@ -720,6 +841,7 @@ final class GameScene: SKScene {
                 SoundEngine.shared.play(.unlock)
                 flipSquare(p)
                 ripple(at: cellPosition(p), color: .white)
+                refreshLivePath(flipping: [p])
                 setMode(.normal)
                 message = levelText
                 refreshStar()
@@ -741,6 +863,7 @@ final class GameScene: SKScene {
             flipSquare(p)
             ripple(at: cellPosition(p), color: pathColor)
             sparkleSquare(p)
+            refreshLivePath(flipping: [p])
             message = levelText
             refreshStar()
             refreshCounters()
@@ -765,7 +888,8 @@ final class GameScene: SKScene {
         ripple(at: cellPosition(p), color: lockColor)
         if hadStar, let star = starNode {
             starNode = nil
-            star.run(.sequence([.scale(to: 0, duration: 0.5), .removeFromParent()]))
+            star.run(.sequence([Motion.reduced ? SKAction.fadeOut(withDuration: 0.4) : SKAction.scale(to: 0, duration: 0.5),
+                                .removeFromParent()]))
             SoundEngine.shared.play(.starAway)
             message = "Goodbye star!"
         } else {
@@ -777,6 +901,7 @@ final class GameScene: SKScene {
             flipSquare(n, delay: isCorner ? 0.07 : 0.03, from: p)
             sparkleSquare(n)
         }
+        refreshLivePath(flipping: Set(flipped + [p]))
         refreshStar()
         refreshCounters()
     }
@@ -791,9 +916,11 @@ final class GameScene: SKScene {
             powerupCounts[kind.rawValue] -= 1
             node.run(pressAction(0.9))
             // A wave sweeping across from the left.
-            for p in board.flipAll() {
+            let flippedAll = board.flipAll()
+            for p in flippedAll {
                 flipSquare(p, delay: Double(p.col) * 0.04 + Double(p.row) * 0.015)
             }
+            refreshLivePath(flipping: Set(flippedAll))
             message = "Flip all squares"
             SoundEngine.shared.play(.flip)
             refreshStar()
@@ -848,7 +975,7 @@ final class GameScene: SKScene {
                 let cross = SKSpriteNode(texture: art.texture, size: art.size)
                 cross.position = cellPosition(p)
                 cross.zPosition = Z.cross
-                cross.run(pulseAction(), withKey: "pulse")
+                if !Motion.reduced { cross.run(pulseAction(), withKey: "pulse") }
                 addChild(cross)
                 crosses.append(cross)
             }
@@ -856,7 +983,7 @@ final class GameScene: SKScene {
             for (p, node) in squares where !board.isLocked(p) {
                 node.startPulse()
             }
-            for node in pulseExtras {
+            for node in pulseExtras where !Motion.reduced {
                 node.run(pulseAction(), withKey: "pulse")
             }
         }
@@ -881,6 +1008,7 @@ final class GameScene: SKScene {
 
     private func commit() {
         guard phase == .playing else { return }
+        endGridTracking()
         setMode(.normal)
         phase = .resolving
         applyChromeForPhase()
@@ -972,7 +1100,10 @@ final class GameScene: SKScene {
             }
             sparkle(color: textColor, at: node.position, texture: Art.star, side: layout.s * 0.4, z: Z.flying)
             node.zPosition = Z.flying
-            node.run(.sequence([
+            if Motion.reduced {
+                node.run(.sequence([.fadeOut(withDuration: 0.6), .removeFromParent()]))
+            } else {
+                node.run(.sequence([
                 .scale(to: 1.2, duration: 0.1),
                 .scale(to: 1, duration: 0.1),
                 .group([.move(to: target, duration: 1.8).timing(.easeInEaseOut),
@@ -980,6 +1111,7 @@ final class GameScene: SKScene {
                         .rotate(byAngle: 2 * .pi, duration: 2)]),
                 .removeFromParent(),
             ]))
+            }
         }
 
         showScorePopup(result)
@@ -1008,6 +1140,11 @@ final class GameScene: SKScene {
 
         score += total
         animateScoreChange(total)
+        if total > 0 {
+            // Bigger rounds get more confetti; a reward round gets the lot.
+            let rewarded = result.noWhites && total >= board.rows * board.cols
+            confetti(count: rewarded ? 140 : min(12 + total * 3, 110))
+        }
         bgSquares.forEach { $0.node.color = pathColor }
         refreshCounters()
         applyChromeForPhase()
@@ -1046,7 +1183,8 @@ final class GameScene: SKScene {
         if let star = starNode {
             starNode = nil
             star.zPosition = Z.flying
-            star.run(.sequence([.scale(to: 0, duration: 1), .removeFromParent()]))
+            star.run(.sequence([Motion.reduced ? SKAction.fadeOut(withDuration: 0.6) : SKAction.scale(to: 0, duration: 1),
+                                .removeFromParent()]))
         }
 
         // Locked squares and the failed path drift off into the background.
@@ -1097,8 +1235,9 @@ final class GameScene: SKScene {
         addChild(popup)
         scorePopup = popup
 
+        if Motion.reduced { popup.position.y = layout.gridCenter.y }
         popup.run(.sequence([
-            .group([.moveTo(y: layout.gridCenter.y, duration: 1).timing(.easeOut),
+            .group([Motion.reduced ? SKAction.wait(forDuration: 0) : SKAction.moveTo(y: layout.gridCenter.y, duration: 1).timing(.easeOut),
                     .fadeIn(withDuration: 0.7)]),
             .wait(forDuration: 2),
             .fadeOut(withDuration: 0.5),
@@ -1116,7 +1255,7 @@ final class GameScene: SKScene {
         addChild(label)
         label.run(.sequence([
             .wait(forDuration: 1),
-            .group([.move(to: commitButton.position, duration: 2).timing(.easeInEaseOut),
+            .group([Motion.reduced ? SKAction.wait(forDuration: 0) : SKAction.move(to: commitButton.position, duration: 2).timing(.easeInEaseOut),
                     .fadeOut(withDuration: 2)]),
             .removeFromParent(),
         ]))
@@ -1135,6 +1274,9 @@ final class GameScene: SKScene {
             return (lockColor, 1, Z.lockedSquare)
         } else if board.tone(at: p) == .black {
             return (.black, 1, Z.square)
+        } else if livePath.contains(p) && (phase == .playing || phase == .dealing) {
+            // Already connected to the start: a light wash of the path colour.
+            return (UIColor.white.blended(with: pathColor, amount: 0.35), 0.9, Z.square)
         } else {
             return (.white, 0.8, Z.square)
         }
@@ -1152,14 +1294,39 @@ final class GameScene: SKScene {
     /// squares directly above or below it flip top-to-bottom, others side-to-side.
     private func flipSquare(_ p: GridPoint, delay: TimeInterval = 0, from origin: GridPoint? = nil) {
         guard let node = squares[p] else { return }
-        let look = appearance(p)
-        node.zPosition = look.z + 0.2
+        node.zPosition = appearance(p).z + 0.2
         let axis: SquareNode.FlipAxis = (origin?.col == p.col) ? .horizontal : .vertical
-        node.flip(to: look.color, alpha: look.alpha, delay: delay, axis: axis)
+        node.flip(delay: delay, axis: axis) { [weak self] in
+            guard let self = self else { return (.white, 0.8) }
+            let look = self.appearance(p)
+            return (look.color, look.alpha)
+        }
+    }
+
+    /// Recomputes which squares connect to the start and re-tints the ones that changed.
+    /// Squares in `flipping` are skipped: their flip picks up the new colour itself.
+    private func refreshLivePath(flipping: Set<GridPoint> = []) {
+        let wasReady = pathReady
+        let updated = Set(board.pathLayers().joined())
+        let changed = updated.symmetricDifference(livePath)
+        livePath = updated
+        for p in changed where !flipping.contains(p) {
+            let look = appearance(p)
+            squares[p]?.recolor(to: look.color, alpha: look.alpha)
+        }
+        guard pathReady != wasReady else { return }
+        if pathReady && phase == .playing {
+            // Connected all the way across: a little cue that it's ready to test.
+            UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            sparkle(color: pathColor, at: CGPoint(x: finishBar.position.x + layout.s * 0.5, y: finishBar.position.y),
+                    texture: Art.roundedSquare, side: layout.s * 0.3, spread: layout.s * 0.8, count: 5)
+        }
+        applyChromeForPhase()
     }
 
     /// An outline that grows out of a square and fades.
     private func ripple(at point: CGPoint, color: UIColor) {
+        guard !Motion.reduced else { return }
         let s = layout.s
         let ring = SKShapeNode(rectOf: CGSize(width: s, height: s), cornerRadius: s * 0.12)
         ring.strokeColor = color
@@ -1237,7 +1404,23 @@ final class GameScene: SKScene {
         timerNode.setIcon(won ? "checkmark" : "arrow.clockwise")
         timerNode.setLow(lost || lowTime)
         startBar.color = lost ? lockColor : pathColor
-        finishBar.color = won ? pathColor : .white
+        let ready = phase == .playing && pathReady
+        finishBar.color = won ? pathColor : (ready ? UIColor.white.blended(with: pathColor, amount: 0.5) : .white)
+        if ready && !Motion.reduced {
+            if commitButton.action(forKey: "ready") == nil {
+                commitButton.run(.repeatForever(.sequence([
+                    .scale(to: 1.07, duration: 0.45).timing(.easeInEaseOut),
+                    .scale(to: 1, duration: 0.45).timing(.easeInEaseOut),
+                ])), withKey: "ready")
+            }
+        } else if commitButton.action(forKey: "ready") != nil {
+            commitButton.removeAction(forKey: "ready")
+            commitButton.run(.scale(to: 1, duration: 0.15))
+        }
+        if !(phase == .playing && lowTime) {
+            urgencyFrame.removeAllActions()
+            urgencyFrame.alpha = 0
+        }
         scoreLabel.fontColor = lost ? lockColor : textColor
 
         settingsButton.alpha = settingsAvailable ? 1 : 0.25
@@ -1272,6 +1455,11 @@ final class GameScene: SKScene {
     /// Sends a square off into the background, shrinking and fading.
     private func scatter(_ node: SKNode, delay: TimeInterval, duration: TimeInterval) {
         node.removeAllActions()
+        if Motion.reduced {
+            node.run(.sequence([.wait(forDuration: delay), .fadeOut(withDuration: duration * 0.5),
+                                .removeFromParent()]))
+            return
+        }
         let target = bgSquares.randomElement()?.node.position ?? randomScreenPoint()
         node.run(.sequence([
             .wait(forDuration: delay),
@@ -1284,6 +1472,7 @@ final class GameScene: SKScene {
 
     private func sparkle(color: UIColor, at point: CGPoint, texture: SKTexture = Art.sparkle,
                          side: CGFloat? = nil, spread: CGFloat = 40, count: Int = 6, z: CGFloat = Z.sparkle) {
+        guard !Motion.reduced else { return }
         let side = side ?? layout.s * 0.5
         for _ in 0..<count {
             let particle = SKSpriteNode(texture: texture, size: CGSize(width: side, height: side))
@@ -1304,6 +1493,83 @@ final class GameScene: SKScene {
         guard let node = squares[p] else { return }
         sparkle(color: appearance(p).color, at: node.home, texture: Art.roundedSquare,
                 side: layout.s * 0.5, spread: layout.s, count: 2)
+    }
+
+    /// One beat of the final countdown: the screen edges flash and the timer thumps.
+    private func flashUrgency() {
+        urgencyFrame.removeAllActions()
+        urgencyFrame.alpha = 0.55
+        urgencyFrame.run(.fadeAlpha(to: 0.08, duration: 0.85).timing(.easeOut))
+        timerNode.pulseTick()
+    }
+
+    /// Burst of confetti from the middle of the grid that arcs up and falls away.
+    private func confetti(count: Int) {
+        guard !Motion.reduced, count > 0 else { return }
+        let colors: [UIColor] = [pathColor, .white, .black, pathColor.blended(with: .white, amount: 0.5)]
+        let w = size.width
+        let h = size.height
+        for i in 0..<count {
+            let side = layout.s * CGFloat.random(in: 0.15...0.3)
+            let piece = SKSpriteNode(texture: Art.roundedSquare,
+                                     size: CGSize(width: side, height: side * CGFloat.random(in: 0.5...1)))
+            piece.color = colors[i % colors.count]
+            piece.colorBlendFactor = 1
+            piece.position = layout.gridCenter
+            piece.zPosition = Z.flying
+            addChild(piece)
+            let dx = CGFloat.random(in: -0.55 * w...0.55 * w)
+            let rise = CGFloat.random(in: 0.15 * h...0.4 * h)
+            let up = SKAction.moveBy(x: dx * 0.6, y: rise, duration: 0.5).timing(.easeOut)
+            let fall = SKAction.moveBy(x: dx * 0.4, y: -(rise + 0.6 * h), duration: 1.5).timing(.easeIn)
+            piece.run(.sequence([
+                .wait(forDuration: Double.random(in: 0...0.12)),
+                .group([.sequence([up, fall]),
+                        .rotate(byAngle: CGFloat.random(in: -9...9), duration: 2),
+                        .sequence([.wait(forDuration: 1.3), .fadeOut(withDuration: 0.7)])]),
+                .removeFromParent(),
+            ]))
+        }
+    }
+
+    /// "Level N" banner that sweeps across the grid while the squares deal in.
+    private func showLevelCard(subtitle: String?) {
+        let s = layout.s
+        let w = size.width
+        let card = SKNode()
+        card.zPosition = Z.popup
+        let back = SKShapeNode(rectOf: CGSize(width: w + 20, height: subtitle == nil ? 1.5 * s : 2 * s))
+        back.fillColor = textColor
+        back.strokeColor = .clear
+        back.alpha = 0.9
+        card.addChild(back)
+        let title = makeLabel(levelText, font: "HelveticaNeue-Bold", size: 0.8 * s, color: backdropColor)
+        title.position = CGPoint(x: 0, y: subtitle == nil ? 0 : 0.25 * s)
+        title.zPosition = 0.1
+        card.addChild(title)
+        if let subtitle = subtitle {
+            let sub = makeLabel(subtitle, font: "HelveticaNeue", size: 0.4 * s, color: backdropColor)
+            sub.position = CGPoint(x: 0, y: -0.5 * s)
+            sub.zPosition = 0.1
+            card.addChild(sub)
+        }
+        addChild(card)
+
+        let centre = CGPoint(x: w / 2, y: layout.gridCenter.y)
+        if Motion.reduced {
+            card.position = centre
+            card.alpha = 0
+            card.run(.sequence([.fadeIn(withDuration: 0.15), .wait(forDuration: 0.6),
+                                .fadeOut(withDuration: 0.25), .removeFromParent()]))
+        } else {
+            card.position = CGPoint(x: centre.x + w, y: centre.y)
+            card.run(.sequence([
+                .move(to: centre, duration: 0.25).timing(.easeOut),
+                .wait(forDuration: 0.5),
+                .move(to: CGPoint(x: centre.x - w, y: centre.y), duration: 0.25).timing(.easeIn),
+                .removeFromParent(),
+            ]))
+        }
     }
 
     private func makeLabel(_ text: String, font: String, size: CGFloat, color: UIColor) -> SKLabelNode {

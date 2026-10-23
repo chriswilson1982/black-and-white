@@ -23,8 +23,21 @@ final class SquareNode: SKSpriteNode {
     required init?(coder aDecoder: NSCoder) { fatalError("init(coder:) is not supported") }
 
     /// Card flip: squash flat, swap colour at the midpoint, then open out again.
-    func flip(to newColor: UIColor, alpha newAlpha: CGFloat, delay: TimeInterval = 0, axis: FlipAxis = .vertical) {
+    /// `look` is read at the midpoint, so the square always lands on its latest colour.
+    func flip(delay: TimeInterval = 0, axis: FlipAxis = .vertical,
+              look: @escaping () -> (color: UIColor, alpha: CGFloat)) {
         removeAction(forKey: "flip")
+        removeAction(forKey: "tint")
+        let swap = SKAction.run { [weak self] in
+            let target = look()
+            self?.color = target.color
+            self?.alpha = target.alpha
+        }
+        if Motion.reduced {
+            run(.sequence([.wait(forDuration: delay), .fadeAlpha(to: 0.4, duration: 0.07), swap]),
+                withKey: "flip")
+            return
+        }
         let half = 0.09
         let squash: SKAction
         let open: SKAction
@@ -36,19 +49,26 @@ final class SquareNode: SKSpriteNode {
             squash = SKAction.scaleY(to: 0.04, duration: half).timing(.easeIn)
             open = SKAction.scaleY(to: 1, duration: half).timing(.easeOut)
         }
-        let swap = SKAction.run { [weak self] in
-            self?.color = newColor
-            self?.alpha = newAlpha
-        }
         run(.sequence([.wait(forDuration: delay), squash, swap, open, .scale(to: 1, duration: 0)]),
             withKey: "flip")
+    }
+
+    /// Gentle colour change without a flip (used for the live path tint).
+    /// Skipped while a flip is running, because the flip picks up the latest colour itself.
+    func recolor(to newColor: UIColor, alpha newAlpha: CGFloat) {
+        guard action(forKey: "flip") == nil else { return }
+        removeAction(forKey: "tint")
+        alpha = newAlpha
+        run(.colorize(with: newColor, colorBlendFactor: colorBlendFactor, duration: 0.18), withKey: "tint")
     }
 
     /// The tapped square: changes colour at once and "stamps" down then springs back.
     func stamp(color newColor: UIColor) {
         removeAction(forKey: "flip")
+        removeAction(forKey: "tint")
         color = newColor
         alpha = 1
+        guard !Motion.reduced else { return }
         run(.sequence([
             .scale(to: 0.78, duration: 0.06).timing(.easeOut),
             .scale(to: 1.12, duration: 0.1).timing(.easeOut),
@@ -66,6 +86,12 @@ final class SquareNode: SKSpriteNode {
     func shake() {
         removeAction(forKey: "shake")
         position = home
+        if Motion.reduced {
+            let restAlpha = alpha
+            run(.sequence([.fadeAlpha(to: restAlpha * 0.4, duration: 0.06),
+                           .fadeAlpha(to: restAlpha, duration: 0.12)]), withKey: "shake")
+            return
+        }
         let d = max(3, size.width * 0.08)
         run(.sequence([
             .moveBy(x: d, y: 0, duration: 0.04),
@@ -77,6 +103,7 @@ final class SquareNode: SKSpriteNode {
 
     /// Little bounce as the path floods through.
     func pop(after delay: TimeInterval) {
+        guard !Motion.reduced else { return }
         run(.sequence([.wait(forDuration: delay),
                        .scale(to: 1.15, duration: 0.08).timing(.easeOut),
                        .scale(to: 1, duration: 0.12).timing(.easeIn)]), withKey: "pop")
@@ -84,6 +111,7 @@ final class SquareNode: SKSpriteNode {
 
     /// Gentle throb used while the "flip a single square" power-up is armed.
     func startPulse() {
+        guard !Motion.reduced else { return }
         run(.repeatForever(.sequence([
             .scale(to: 0.85, duration: 0.4).timing(.easeInEaseOut),
             .scale(to: 0.95, duration: 0.4).timing(.easeInEaseOut),
@@ -177,7 +205,7 @@ final class PowerupNode: SKNode {
         icon.size = art.size
         label.fontColor = foreground
         label.text = "\(count)"
-        if let last = lastCount, last != count {
+        if let last = lastCount, last != count, !Motion.reduced {
             // Count changed: the number pops (up for gains, down for spending).
             label.removeAction(forKey: "pop")
             label.setScale(1)
@@ -297,7 +325,17 @@ final class TimerNode: SKNode {
         icon.size = art.size
     }
 
+    /// A beat on each second of the final countdown.
+    func pulseTick() {
+        guard !Motion.reduced else { return }
+        removeAction(forKey: "tick")
+        setScale(1.12)
+        run(.scale(to: 1, duration: 0.3).timing(.easeOut), withKey: "tick")
+    }
+
     func reset() {
+        removeAction(forKey: "tick")
+        setScale(1)
         setProgress(0)
         setLow(false)
         setHandsVisible(true)
