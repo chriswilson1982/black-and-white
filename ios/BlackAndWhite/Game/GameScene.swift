@@ -373,6 +373,13 @@ final class GameScene: SKScene {
     private func relayout() {
         buildChrome()
         renderBoard(animated: false)
+        if phase == .lost {
+            // Locked squares and the failed path already drifted away.
+            for (p, node) in squares where board.isLocked(p) || resultPath.contains(p) {
+                node.removeFromParent()
+                squares[p] = nil
+            }
+        }
         switch phase {
         case .dealing:
             beginPlay()
@@ -383,6 +390,10 @@ final class GameScene: SKScene {
         }
         if phase == .won { bgSquares.forEach { $0.node.color = pathColor } }
         if phase == .lost { bgSquares.forEach { $0.node.color = lockColor } }
+        if phase == .playing && mode != .normal {
+            // Restore the armed power-up's crosses or pulses.
+            setMode(mode)
+        }
         applyChromeForPhase()
     }
 
@@ -630,8 +641,8 @@ final class GameScene: SKScene {
             powerupTapped(node.kind)
         } else if hit(settingsButton, size: CGSize(width: layout.s, height: layout.s), p) {
             settingsTapped()
-        } else if phase == .playing, let cell = cell(at: p) {
-            squareTapped(cell)
+        } else if phase == .playing, let tapped = cell(at: p) {
+            squareTapped(tapped)
         }
     }
 
@@ -910,9 +921,9 @@ final class GameScene: SKScene {
                 starOutcome = .powerup
                 let powerup = powerupNodes[kind.rawValue]
                 target = powerup.position
+                powerupCounts[kind.rawValue] = min(powerupCounts[kind.rawValue] + 1, Board.maxPowerups)
                 run(.sequence([.wait(forDuration: 1.8), .run { [weak self] in
                     guard let self = self else { return }
-                    self.powerupCounts[kind.rawValue] = min(self.powerupCounts[kind.rawValue] + 1, Board.maxPowerups)
                     self.refreshPowerups()
                     SoundEngine.shared.play(.powerup)
                     powerup.run(self.bounceAction())
@@ -1025,7 +1036,7 @@ final class GameScene: SKScene {
         }
 
         if finalScore != 0 {
-            animateScoreChange(-finalScore)
+            animateScoreChange(-finalScore, isLoss: true)
         }
         score = 0
         bgSquares.forEach { $0.node.color = lockColor }
@@ -1073,10 +1084,10 @@ final class GameScene: SKScene {
     }
 
     /// The round's points float from the score towards the centre button while the score updates.
-    private func animateScoreChange(_ delta: Int) {
+    private func animateScoreChange(_ delta: Int, isLoss: Bool = false) {
         let text = delta < 0 ? "\(delta)" : "+\(delta)"
         let label = makeLabel(text, font: "HelveticaNeue-Bold", size: 0.85 * layout.s,
-                              color: delta < 0 ? lockColor : textColor)
+                              color: delta < 0 || isLoss ? lockColor : textColor)
         label.position = scoreLabel.position
         label.zPosition = Z.popup
         addChild(label)

@@ -33,9 +33,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Difficulty")
                 } footer: {
-                    Text("Start with \(draft.difficulty.startingPowerups) of each power-up and "
-                         + "\(Int(draft.difficulty.timeAllowed(level: 1))) seconds on the clock. "
-                         + "The clock gets quicker every level.")
+                    Text(difficultySummary)
                 }
 
                 Section {
@@ -81,6 +79,13 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private var difficultySummary: String {
+        let powerups = draft.difficulty.startingPowerups
+        let seconds = Int(draft.difficulty.timeAllowed(level: 1))
+        return "Start with \(powerups) of each power-up and \(seconds) seconds on the clock. "
+            + "The clock gets quicker every level."
     }
 
     private func colorBinding(_ keyPath: WritableKeyPath<GameSettings, RGBA>) -> Binding<Color> {

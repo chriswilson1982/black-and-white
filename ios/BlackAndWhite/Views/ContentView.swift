@@ -19,6 +19,13 @@ struct ContentView: View {
                                       height: proxy.size.height + insets.top + insets.bottom)
                 coordinator.prepareScene(size: fullSize, insets: UIEdgeInsets(insets))
             }
+            .onChange(of: proxy.size) { _, _ in
+                // In case the first layout pass reported a zero size.
+                let insets = proxy.safeAreaInsets
+                let fullSize = CGSize(width: proxy.size.width + insets.leading + insets.trailing,
+                                      height: proxy.size.height + insets.top + insets.bottom)
+                coordinator.prepareScene(size: fullSize, insets: UIEdgeInsets(insets))
+            }
             .onChange(of: proxy.safeAreaInsets) { _, newInsets in
                 coordinator.scene?.safeInsets = UIEdgeInsets(newInsets)
             }
@@ -29,6 +36,8 @@ struct ContentView: View {
                 Text("Your score will be reset to zero!")
             }
         }
+        // Keep the game layout fixed when the keyboard appears (e.g. for the name prompt).
+        .ignoresSafeArea(.keyboard)
         .statusBarHidden()
         .sheet(item: $coordinator.activeSheet, onDismiss: { coordinator.sheetDismissed() }) { sheet in
             switch sheet {

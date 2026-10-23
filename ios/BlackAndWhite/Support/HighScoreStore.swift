@@ -25,7 +25,7 @@ enum HighScoreResult {
 final class HighScoreStore {
     private(set) var entries: [ScoreEntry] = []
 
-    @ObservationIgnored private let fileURL: URL
+    private let fileURL: URL
 
     init() {
         let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
