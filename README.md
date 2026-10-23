@@ -9,6 +9,12 @@ Black & White is a colourful grid-based puzzle game created using [Pythonista](h
 
 ***
 
+### iOS app (SpriteKit)
+
+A native iOS version built with SpriteKit and SwiftUI lives in the [`ios`](ios) folder. Open `ios/BlackAndWhite.xcodeproj` in Xcode 16 or later. See [`ios/README.md`](ios/README.md) for details.
+
+***
+
 ### Installation
 
 Download or clone the repository to Pythonista's file system and run ```main.py``` using the Python 3 interpreter.
