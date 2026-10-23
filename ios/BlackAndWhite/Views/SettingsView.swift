@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @State private var draft: GameSettings
     private let onSave: (GameSettings) -> Void
 
@@ -37,14 +38,21 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    ColorPicker("Background", selection: colorBinding(\.background), supportsOpacity: false)
+                    Picker("Appearance", selection: $draft.appearance) {
+                        ForEach(ColorTheme.allCases) { option in
+                            Text(option.name).tag(option)
+                        }
+                    }
+                    if draft.appearance == .custom {
+                        ColorPicker("Background", selection: colorBinding(\.background), supportsOpacity: false)
+                        Picker("Text and icons", selection: $draft.whiteText) {
+                            Text("Black").tag(false)
+                            Text("White").tag(true)
+                        }
+                    }
                     ColorPicker("Locked squares", selection: colorBinding(\.lockColor), supportsOpacity: false)
                     ColorPicker("Path", selection: colorBinding(\.pathColor), supportsOpacity: false)
-                    Picker("Text and icons", selection: $draft.whiteText) {
-                        Text("Black").tag(false)
-                        Text("White").tag(true)
-                    }
-                    ThemePreview(settings: draft)
+                    ThemePreview(settings: resolvedDraft)
                     Button("Restore default colours") { draft.resetColors() }
                 } header: {
                     Text("Colours")
@@ -57,7 +65,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    NavigationLink("Tutorial") { TutorialView(settings: draft) }
+                    NavigationLink("Tutorial") { TutorialView(settings: resolvedDraft) }
                     NavigationLink("How to play") { HelpView() }
                 }
             }
@@ -80,6 +88,11 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    /// The draft as the game will draw it (Automatic follows the current light / dark mode).
+    private var resolvedDraft: GameSettings {
+        draft.resolved(systemIsDark: colorScheme == .dark)
     }
 
     private var difficultySummary: String {

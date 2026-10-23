@@ -3,17 +3,28 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var coordinator = GameCoordinator()
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// Forces light or dark for the menus when the player picked a fixed appearance.
+    private var forcedScheme: ColorScheme? {
+        switch coordinator.settings.appearance {
+        case .light: return .light
+        case .dark: return .dark
+        case .system, .custom: return nil
+        }
+    }
 
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                Color(uiColor: coordinator.settings.background.uiColor)
+                Color(uiColor: coordinator.effectiveSettings.background.uiColor)
                 if let scene = coordinator.scene {
                     SpriteView(scene: scene, options: [.ignoresSiblingOrder])
                 }
             }
             .ignoresSafeArea()
             .onAppear {
+                coordinator.systemAppearanceChanged(isDark: colorScheme == .dark)
                 let insets = proxy.safeAreaInsets
                 let fullSize = CGSize(width: proxy.size.width + insets.leading + insets.trailing,
                                       height: proxy.size.height + insets.top + insets.bottom)
@@ -38,6 +49,10 @@ struct ContentView: View {
         }
         // Keep the game layout fixed when the keyboard appears (e.g. for the name prompt).
         .ignoresSafeArea(.keyboard)
+        .onChange(of: colorScheme) { _, newScheme in
+            coordinator.systemAppearanceChanged(isDark: newScheme == .dark)
+        }
+        .preferredColorScheme(forcedScheme)
         .statusBarHidden()
         .sheet(item: $coordinator.activeSheet, onDismiss: { coordinator.sheetDismissed() }) { sheet in
             switch sheet {
@@ -52,7 +67,7 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $coordinator.showingTutorial,
                          onDismiss: { coordinator.tutorialDismissed() }) {
-            TutorialView(settings: coordinator.settings) { coordinator.finishTutorial() }
+            TutorialView(settings: coordinator.effectiveSettings) { coordinator.finishTutorial() }
         }
         .alert(coordinator.announcement?.title ?? "",
                isPresented: Binding(get: { coordinator.announcement != nil },

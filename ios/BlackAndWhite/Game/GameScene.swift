@@ -222,6 +222,12 @@ final class GameScene: SKScene {
         startRound(afterWin: false)
     }
 
+    /// New colours without restarting: the screen is redrawn around the current round.
+    func updateTheme(_ newSettings: GameSettings) {
+        settings = newSettings
+        if isBuilt { relayout() }
+    }
+
     func apply(settings newSettings: GameSettings) {
         settings = newSettings
         buildChrome()

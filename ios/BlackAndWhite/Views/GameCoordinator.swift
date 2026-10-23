@@ -17,6 +17,11 @@ final class GameCoordinator: GameSceneDelegate {
     }
 
     var settings: GameSettings
+    /// The phone is in dark mode (used when Appearance is Automatic).
+    var systemIsDark = false
+
+    /// Settings with the background and text colours resolved for the current appearance.
+    var effectiveSettings: GameSettings { settings.resolved(systemIsDark: systemIsDark) }
     let scores = HighScoreStore()
     var scene: GameScene?
 
@@ -47,7 +52,7 @@ final class GameCoordinator: GameSceneDelegate {
 
     func prepareScene(size: CGSize, insets: UIEdgeInsets) {
         guard scene == nil, size.width > 0, size.height > 0 else { return }
-        let newScene = GameScene(size: size, settings: settings, safeInsets: insets)
+        let newScene = GameScene(size: size, settings: effectiveSettings, safeInsets: insets)
         newScene.gameDelegate = self
         scene = newScene
 
@@ -113,6 +118,15 @@ final class GameCoordinator: GameSceneDelegate {
         }
     }
 
+    /// Light / dark mode changed. With Automatic appearance, the game recolours in place.
+    func systemAppearanceChanged(isDark: Bool) {
+        guard isDark != systemIsDark else { return }
+        systemIsDark = isDark
+        if settings.appearance == .system {
+            scene?.updateTheme(effectiveSettings)
+        }
+    }
+
     func finishTutorial() {
         showingTutorial = false
     }
@@ -155,7 +169,7 @@ final class GameCoordinator: GameSceneDelegate {
                 settings = newSettings
                 settings.save()
                 SoundEngine.shared.enabled = newSettings.soundEnabled
-                scene?.apply(settings: newSettings)
+                scene?.apply(settings: effectiveSettings)
             } else {
                 scene?.startNewGame()
             }
