@@ -14,9 +14,16 @@ final class SquareNode: SKSpriteNode {
         case horizontal
     }
 
-    init(point: GridPoint, side: CGFloat) {
+    /// - Parameter rounded: rounded corners with a 2 pt gap between squares; otherwise solid squares.
+    init(point: GridPoint, side: CGFloat, rounded: Bool) {
         self.point = point
-        super.init(texture: nil, color: .black, size: CGSize(width: side, height: side))
+        if rounded {
+            let inset = side - 2
+            super.init(texture: Art.roundedSquare, color: .black, size: CGSize(width: inset, height: inset))
+            colorBlendFactor = 1
+        } else {
+            super.init(texture: nil, color: .black, size: CGSize(width: side, height: side))
+        }
     }
 
     @available(*, unavailable)

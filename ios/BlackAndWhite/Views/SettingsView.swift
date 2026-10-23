@@ -52,6 +52,7 @@ struct SettingsView: View {
                     }
                     ColorPicker("Locked squares", selection: colorBinding(\.lockColor), supportsOpacity: false)
                     ColorPicker("Path", selection: colorBinding(\.pathColor), supportsOpacity: false)
+                    Toggle("Rounded squares", isOn: $draft.roundedSquares)
                     ThemePreview(settings: resolvedDraft)
                     Button("Restore default colours") { draft.resetColors() }
                 } header: {
@@ -116,7 +117,7 @@ private struct ThemePreview: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            HStack(spacing: 0) {
+            HStack(spacing: settings.roundedSquares ? 2 : 0) {
                 swatch(.black)
                 swatch(.white.opacity(0.8))
                 swatch(settings.lockColor.color)
@@ -136,6 +137,8 @@ private struct ThemePreview: View {
     }
 
     private func swatch(_ color: Color) -> some View {
-        Rectangle().fill(color).frame(width: 24, height: 24)
+        RoundedRectangle(cornerRadius: settings.roundedSquares ? 3 : 0)
+            .fill(color)
+            .frame(width: settings.roundedSquares ? 22 : 24, height: settings.roundedSquares ? 22 : 24)
     }
 }

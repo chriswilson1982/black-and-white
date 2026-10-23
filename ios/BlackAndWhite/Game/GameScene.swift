@@ -539,7 +539,7 @@ final class GameScene: SKScene {
         }
 
         for p in board.allPoints {
-            let node = SquareNode(point: p, side: s)
+            let node = SquareNode(point: p, side: s, rounded: settings.roundedSquares)
             node.position = cellPosition(p)
             node.home = node.position
             addChild(node)

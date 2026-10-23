@@ -61,12 +61,14 @@ struct GameSettings: Codable, Equatable {
     var hasChosenName = false
     var hasSeenTutorial = false
     var appearance: ColorTheme = .system
+    /// Squares drawn with rounded corners and a small gap, instead of the original solid grid.
+    var roundedSquares = true
 
     init() {}
 
     enum CodingKeys: String, CodingKey {
         case difficulty, username, whiteText, background, lockColor, pathColor
-        case soundEnabled, hasChosenName, hasSeenTutorial, appearance
+        case soundEnabled, hasChosenName, hasSeenTutorial, appearance, roundedSquares
     }
 
     static let lightBackground = RGBA(1, 1, 1)
@@ -130,6 +132,7 @@ extension GameSettings {
         soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? soundEnabled
         hasChosenName = try c.decodeIfPresent(Bool.self, forKey: .hasChosenName) ?? hasChosenName
         hasSeenTutorial = try c.decodeIfPresent(Bool.self, forKey: .hasSeenTutorial) ?? hasSeenTutorial
+        roundedSquares = try c.decodeIfPresent(Bool.self, forKey: .roundedSquares) ?? roundedSquares
         if let saved = try c.decodeIfPresent(ColorTheme.self, forKey: .appearance) {
             appearance = saved
         } else {

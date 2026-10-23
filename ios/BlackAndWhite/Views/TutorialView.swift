@@ -192,9 +192,12 @@ struct TutorialView: View {
         }
         let isTarget = step == .tap && p == Self.target
 
-        return Rectangle()
+        let rounded = settings.roundedSquares
+        return RoundedRectangle(cornerRadius: rounded ? side * 0.1 : 0)
             .fill(color)
-            .overlay(Rectangle().stroke(Color.gray.opacity(0.25), lineWidth: 0.5))
+            .overlay(RoundedRectangle(cornerRadius: rounded ? side * 0.1 : 0)
+                .stroke(Color.gray.opacity(rounded ? 0 : 0.25), lineWidth: 0.5))
+            .padding(rounded ? 1 : 0)
             .frame(width: side, height: side)
             .rotation3DEffect(.degrees(spins[p, default: 0]), axis: (x: 0, y: 1, z: 0))
             .overlay {
